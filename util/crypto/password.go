@@ -1,13 +1,30 @@
 package crypto
 
+import (
+	"golang.org/x/crypto/bcrypt"
+)
+
 type password struct {
 }
 
-func (password) Encrypt(plaintext string) (ciphertext string) {
-	//todo 密码的加密算法
-	return plaintext
+// Encrypt 加密
+// 使用 bcrypt 加密
+func (password) Encrypt(plaintext []byte) (string, error) {
+	// 生成哈希密码
+	ciphertext, err := bcrypt.GenerateFromPassword(plaintext, bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(ciphertext), nil
 }
-func (password) Decrypt(ciphertext string) (plaintext string) {
-	//todo 密码的解密算法
-	return plaintext
+func (password) Decrypt(ciphertext []byte) (plaintext string, err error) {
+	return "", nil
+}
+
+func (p password) Check(plaintext []byte, ciphertext []byte) (result bool, err error) {
+	err = bcrypt.CompareHashAndPassword(ciphertext, plaintext)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
