@@ -1,7 +1,7 @@
 package util
 
 const (
-	PasswordCrypto = "password"
+	PasswordCrypto = iota
 )
 
 type Crypto interface {
@@ -9,7 +9,7 @@ type Crypto interface {
 	Decrypt(ciphertext string) (plaintext string)
 }
 
-func NewCrypto(object string) Crypto {
+func NewCrypto(object int) Crypto {
 	switch object {
 	case PasswordCrypto:
 		return password{}
