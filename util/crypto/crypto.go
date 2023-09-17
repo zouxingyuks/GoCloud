@@ -9,6 +9,7 @@ const (
 type Crypto interface {
 	Encrypt(plaintext []byte) (ciphertext string, err error)
 	Decrypt(ciphertext []byte) (plaintext string, err error)
+	Check(plaintext []byte, ciphertext []byte) (result bool, err error)
 }
 
 func NewCrypto(object int) Crypto {
