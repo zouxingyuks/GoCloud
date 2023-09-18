@@ -23,7 +23,6 @@ type User struct {
 	gorm.Model
 	UserName  string `gorm:"type:varchar(100);unique_index"`
 	Email     string `gorm:"type:varchar(100);unique_index"`
-	Nick      string `gorm:"size:50"`
 	Password  string `json:"-"`
 	Status    int
 	GroupID   uint
