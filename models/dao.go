@@ -1,4 +1,4 @@
-package dao
+package models
 
 import (
 	"GoCloud/pkg/conf"
@@ -17,7 +17,7 @@ var DB *gorm.DB
 //todo 修改
 
 // 连接数据库
-func Init() {
+func InitDao() {
 	//util.Log().Info("Initializing database connection...")
 	var (
 		db  *gorm.DB
@@ -40,19 +40,23 @@ func Init() {
 		//		conf.DatabaseConfig.Port))
 		case "mysql":
 			db, err = connMysql()
-			//default:
-			//	util.Log().Panic("Unsupported database type %q.", confDBType)
-			//}
+		default:
+			panic("数据库类型错误")
+			//util.Log().Panic("Unsupported database type %q.", confDBType)
 		}
 	}
+
 	//todo  替换log
-	panic(err)
+	if err != nil {
+		panic(err)
+	}
 	//util.Log().Panic("Failed to connect to database: %s", err)
 	//todo 这部分没看懂
 	// 处理表前缀
 	gorm.DefaultTableNameHandler = func(db *gorm.DB, defaultTableName string) string {
 		return conf.DatabaseConfig.TablePrefix + defaultTableName
 	}
+
 	// Debug模式下，输出所有 SQL 日志
 	if conf.SystemConfig.Debug {
 		db.LogMode(true)
@@ -75,13 +79,66 @@ func Init() {
 	//执行迁移
 
 	//todo 数据未迁移
-	//migration()
+	migration()
+}
+
+// 是否需要迁移
+func needMigration() bool {
+	var setting Setting
+	return DB.Where("name = ?", "db_version_"+conf.RequiredDBVersion).First(&setting).Error != nil
+}
+func migration() {
+	// 确认是否需要执行迁移
+	//todo 处理日志处理器
+	//if !needMigration() {
+	//	//todo 处理日志处理器
+	//	panic("Database version fulfilled, skip schema migration.")
+	//	//util.Log().Info("Database version fulfilled, skip schema migration.")
+	//	return
+	//
+	//}
+	//util.Log().Info("Start initializing database schema...")
+	//todo 处理日志处理器
+	//// 清除所有缓存
+	//if instance, ok := cache.Store.(*cache.RedisStore); ok {
+	//	instance.DeleteAll()
+	//}
+	// 自动迁移模式
+	if conf.DatabaseConfig.Type == "mysql" {
+		DB = DB.Set("gorm:table_options", "ENGINE=InnoDB")
+	}
+
+	DB.AutoMigrate(
+		&User{},
+		&Setting{},
+		//&Group{}, &Policy{}, &Folder{}, &File{}, &Share{}
+	)
+	//// 创建初始存储策略
+	//addDefaultPolicy()
+	//
+	//// 创建初始用户组
+	//addDefaultGroups()
+	//
+	//// 创建初始管理员账户
+	//addDefaultUser()
+	//
+	//// 创建初始节点
+	//addDefaultNode()
+	//
+	//// 向设置数据表添加初始设置
+	//addDefaultSettings()
+	//
+	//// 执行数据库升级脚本
+	//execUpgradeScripts()
+	//
+	//util.Log().Info("Finish initializing database schema.")
+
 }
 
 // 连接MySQL数据库
 // bash: go get gorm.io/driver/mysql
 func connMysql() (*gorm.DB, error) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=%s&parseTime=True&loc=Local", conf.DatabaseConfig.User, conf.DatabaseConfig.Password, conf.DatabaseConfig.Host, conf.DatabaseConfig.Name, conf.DatabaseConfig.Charset)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=True&loc=Local", conf.DatabaseConfig.User, conf.DatabaseConfig.Password, conf.DatabaseConfig.Host, conf.DatabaseConfig.Port, conf.DatabaseConfig.Name, conf.DatabaseConfig.Charset)
 	db, err := gorm.Open("mysql", dsn)
 	return db, err
 }
