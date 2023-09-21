@@ -3,8 +3,10 @@ package controllers
 //进行多一层封装，以保证 api 的路径的修改方便，以及可以不用修改下层实现逻辑
 import "github.com/gin-gonic/gin"
 
-type V0 struct {
+type v0 struct {
 }
+
+var V0 v0
 
 //todo 补充更多信息
 
@@ -32,6 +34,6 @@ func (V0) UserRegister(c *gin.Context) {
 // @Success 200 {object} serializer.Response "登录成功" Example({"message": "登录成功"})
 // @Failure 400 {object} serializer.Response "参数错误" Example({"message": "参数错误"})
 // @Router /users/session [post]
-func (V0) UserLogin(c *gin.Context) {
+func (v0) UserLogin(c *gin.Context) {
 	userLogin(c)
 }
