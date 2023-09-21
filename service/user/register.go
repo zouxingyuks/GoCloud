@@ -7,14 +7,24 @@ import (
 	"GoCloud/util/filter"
 	"crypto/sha256"
 	"fmt"
+	"net/http"
 )
 
 func (p *Param) Register() serializer.Response {
+	if filter.EmailFilter(p.Email) {
+		return serializer.Response{
+			Code: 400,
+			Msg:  serializer.EmailInvalided.Error(),
+		}
+	}
+	//todo 邮箱格式校验
+
 	//todo 加载更多模块
 	//// 相关设定
+	//此类变量应该是函数开始时就获取，避免临时修改导致的错误
 	//options := model.GetSettingByNames("email_active")
-	//isEmailRequired := model.IsTrueVal(options["email_active"])
-	defaultGroup := conf.GetSystemConfig(conf.UserConfigDefaultGroup)
+	//isEmailRequired := models.IsTrueVal(options["email_active"])
+	defaultGroup := conf.SystemConfig.Get(conf.UserConfigDefaultGroup)
 
 	// 创建新的用户对象
 	user := models.NewUser()
@@ -25,21 +35,33 @@ func (p *Param) Register() serializer.Response {
 	if err != nil {
 		return serializer.Response{
 			Code: 400,
-			Msg:  PassWordInvalided,
+			Msg:  serializer.PassWordInvalided.Error(),
 		}
 	}
 	user.Status = models.UserActive
 	//if isEmailRequired {
-	//	user.Status = model.NotActivicated
+	//	user.Status = model.UserNotActivated
 	//}
 	user.GroupID = uint(defaultGroup.(int))
 	//todo 取消测试
-	fmt.Println(user)
 	//userNotActivated := false
 	//todo 补全数据库创建逻辑
-	//if err := dao.User.Create(&user); err != nil {
-	//	return serializer.Err(serializer.CodeEmailExisted, "Email already in use", err)
-	//}
+	//先进行尝试创建
+	if err := models.DB().Create(&user).Error; err != nil {
+		//创建失败后进一步判断错误情况
+
+		//检查已存在使用者是否尚未激活
+		expectedUser, err := models.GetUserByEmail(user.Email)
+		//如若尚未激活，则将用户状态设置为未激活
+		if expectedUser.Status == models.UserNotActivated {
+			//todo 未激活用户的处理
+			//userNotActivated = true
+			user = expectedUser
+		} else {
+			//
+			return serializer.Err(http.StatusBadRequest, serializer.EmailExist.Error(), err)
+		}
+	}
 	// todo 激活邮件
 	// 发送激活邮件
 	//if isEmailRequired {
@@ -86,7 +108,7 @@ func (p *Param) Register() serializer.Response {
 	//todo 继续编写注册器
 	return serializer.Response{
 		Code: 200,
-		Msg:  RegisterSucceed,
+		Msg:  serializer.RegisterSucceed.Error(),
 	}
 }
 func defaultUserName(email string) string {
