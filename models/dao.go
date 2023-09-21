@@ -19,13 +19,13 @@ var once sync.Once
 // todo 修改
 func DB() *gorm.DB {
 	once.Do(func() {
-		InitDao()
+		initDao()
 	})
 	return db
 }
 
-// InitDao 连接数据库
-func InitDao() {
+// initDao 连接数据库
+func initDao() {
 	//util.Log().Info("Initializing database connection...")
 	var (
 		err error
