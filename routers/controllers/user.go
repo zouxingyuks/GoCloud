@@ -3,6 +3,7 @@ package controllers
 import (
 	"GoCloud/pkg/serializer"
 	user2 "GoCloud/service/user"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -16,6 +17,8 @@ func userRegister(c *gin.Context) {
 
 	// 解析并验证用户注册信息
 	if err := c.ShouldBindJSON(&user); err == nil {
+		//todo 删除测试
+		fmt.Println(user)
 		// 注册用户
 		res = user.Register()
 	} else {

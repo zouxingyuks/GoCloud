@@ -4,14 +4,9 @@ import (
 	"GoCloud/models"
 	"GoCloud/pkg/conf"
 	"GoCloud/pkg/serializer"
+	"GoCloud/util/filter"
 	"crypto/sha256"
 	"fmt"
-)
-
-const (
-	WaitActive        = "等待激活"
-	RegisterSucceed   = "注册成功"
-	PassWordInvalided = "密码不合法"
 )
 
 func (p *Param) Register() serializer.Response {
