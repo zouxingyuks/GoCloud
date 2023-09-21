@@ -9,18 +9,25 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mssql"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"sync"
 	"time"
 )
 
-var DB *gorm.DB
+var db *gorm.DB
+var once sync.Once
 
-//todo 修改
+// todo 修改
+func DB() *gorm.DB {
+	once.Do(func() {
+		InitDao()
+	})
+	return db
+}
 
-// 连接数据库
+// InitDao 连接数据库
 func InitDao() {
 	//util.Log().Info("Initializing database connection...")
 	var (
-		db  *gorm.DB
 		err error
 	)
 	if gin.Mode() == gin.TestMode {
@@ -45,7 +52,6 @@ func InitDao() {
 			//util.Log().Panic("Unsupported database type %q.", confDBType)
 		}
 	}
-
 	//todo  替换log
 	if err != nil {
 		panic(err)
@@ -71,21 +77,17 @@ func InitDao() {
 	} else {
 		db.DB().SetMaxOpenConns(100)
 	}
-
 	//超时
 	db.DB().SetConnMaxLifetime(time.Second * 30)
-
-	DB = db
 	//执行迁移
-
 	//todo 数据未迁移
 	migration()
 }
 
-// 是否需要迁移
+// 检查是否需要迁移，不可单独使用
 func needMigration() bool {
 	var setting Setting
-	return DB.Where("name = ?", "db_version_"+conf.RequiredDBVersion).First(&setting).Error != nil
+	return db.Where("name = ?", "db_version_"+conf.RequiredDBVersion).First(&setting).Error != nil
 }
 func migration() {
 	// 确认是否需要执行迁移
@@ -105,10 +107,10 @@ func migration() {
 	//}
 	// 自动迁移模式
 	if conf.DatabaseConfig.Type == "mysql" {
-		DB = DB.Set("gorm:table_options", "ENGINE=InnoDB")
+		db = db.Set("gorm:table_options", "ENGINE=InnoDB")
 	}
 
-	DB.AutoMigrate(
+	db.AutoMigrate(
 		&User{},
 		&Setting{},
 		//&Group{}, &Policy{}, &Folder{}, &File{}, &Share{}
