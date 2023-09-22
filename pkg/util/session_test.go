@@ -1,4 +1,4 @@
-package session
+package util
 
 import (
 	"fmt"
@@ -6,7 +6,6 @@ import (
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap/zaptest"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -19,7 +18,7 @@ func TestGetAndSetSession(t *testing.T) {
 	r.Use(sessions.Sessions("mysession", store))
 
 	r.GET("/test", func(c *gin.Context) {
-		session := NewSession(zaptest.NewLogger(t))
+		session := NewSession()
 		session.Set(c, map[string]interface{}{
 			"num": "111",
 		})
@@ -47,7 +46,7 @@ func TestDeleteSession(t *testing.T) {
 	r.Use(sessions.Sessions("mysession", store))
 
 	r.GET("/test", func(c *gin.Context) {
-		session := NewSession(zaptest.NewLogger(t))
+		session := NewSession()
 		session.Set(c, map[string]interface{}{
 			"num": "111",
 		})

@@ -1,12 +1,10 @@
-package session
+package util
 
 import (
-	sessions "github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
-
-var log *zap.Logger
 
 type Session interface {
 	Get(c *gin.Context, key string) interface{}
@@ -14,8 +12,7 @@ type Session interface {
 	Delete(c *gin.Context, key string)
 }
 
-func NewSession(l *zap.Logger) Session {
-	log = l
+func NewSession() Session {
 	return &session{}
 }
 
@@ -36,7 +33,7 @@ func (session) Set(c *gin.Context, list map[string]interface{}) {
 	}
 	err := s.Save()
 	if err != nil {
-		log.Warn("无法设置 Session 值...",
+		Log().Warn("无法设置 Session 值...",
 			zap.Error(err),
 		)
 	}
@@ -46,5 +43,9 @@ func (session) Set(c *gin.Context, list map[string]interface{}) {
 func (session) Delete(c *gin.Context, key string) {
 	s := sessions.Default(c)
 	s.Delete(key)
-	s.Save()
+	err := s.Save()
+	if err != nil {
+		//todo 处理此错误
+		return
+	}
 }
