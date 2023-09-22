@@ -11,7 +11,7 @@ import (
 )
 
 func (p *Param) Register() serializer.Response {
-	if filter.EmailFilter(p.Email) {
+	if filter.Facade.IsValidEmail(p.Email) {
 		return serializer.Response{
 			Code: 400,
 			Msg:  serializer.EmailInvalided.Error(),

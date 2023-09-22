@@ -8,6 +8,9 @@ import (
 	"net/http"
 )
 
+// 所以的参数过滤均再此处过滤
+// 包括但不限于传入参数过滤、返回信息过滤
+// todo 参数过滤，
 // userRegister 用户注册接口
 func userRegister(c *gin.Context) {
 	user := user2.NewUserService()
@@ -21,13 +24,33 @@ func userRegister(c *gin.Context) {
 		fmt.Println(user)
 		// 注册用户
 		res = user.Register()
+		c.JSON(res.Code, res)
+
 	} else {
 		// 参数错误
-		res = serializer.Response{
-			Code: http.StatusBadRequest,
-			Msg:  "参数错误",
-		}
+		res = serializer.Err(
+			http.StatusBadRequest,
+			"参数错误",
+			err)
+		//请求失败，返回400
+		c.JSON(400, res)
 	}
+}
+func userLogin(c *gin.Context) {
+	user := user2.NewUserService()
+	res := serializer.Response{}
+	if err := c.ShouldBindJSON(&user); err == nil {
+		// 注册用户
+		res = user.Login()
+		c.JSON(res.Code, res)
 
-	c.JSON(res.Code, res)
+	} else {
+		// 参数错误
+		res = serializer.Err(
+			http.StatusBadRequest,
+			"参数错误",
+			err)
+		//请求失败，返回400
+		c.JSON(400, res)
+	}
 }
