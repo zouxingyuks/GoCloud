@@ -53,7 +53,7 @@ func (apiV0) load(r *gin.Engine) {
 		user := v0.Group("users")
 		{
 			//用户登录
-			//user.POST("session", middleware.CaptchaRequired("login_captcha"), controllers.V0.UserLogin)
+			user.POST("session", middleware.CaptchaRequired("login_captcha"), controllers.V0.UserLogin)
 			// 用户注册
 			user.POST("",
 				//todo 允许设置注册
