@@ -41,7 +41,8 @@ func userLogin(c *gin.Context) {
 	res := serializer.Response{}
 	if err := c.ShouldBindJSON(&user); err == nil {
 		// 注册用户
-		res = user.Login()
+		res = user.Login(c)
+		//返回基本用户数据
 		c.JSON(res.Code, res)
 
 	} else {
