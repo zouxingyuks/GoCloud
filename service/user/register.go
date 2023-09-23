@@ -4,14 +4,15 @@ import (
 	"GoCloud/models"
 	"GoCloud/pkg/conf"
 	"GoCloud/pkg/serializer"
-	"GoCloud/util/filter"
+	"GoCloud/pkg/util/filter"
 	"crypto/sha256"
 	"fmt"
 	"net/http"
 )
 
+// todo 是否有必要记录 注册用户记录
 func (p *Param) Register() serializer.Response {
-	if filter.Facade.IsValidEmail(p.Email) {
+	if !filter.Facade.IsValidEmail(p.Email) {
 		return serializer.Response{
 			Code: 400,
 			Msg:  serializer.EmailInvalided.Error(),
