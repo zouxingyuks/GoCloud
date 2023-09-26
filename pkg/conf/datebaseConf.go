@@ -17,9 +17,9 @@ type database struct {
 
 // DatabaseConfig 数据库配置
 var DatabaseConfig = &database{
-	Type:       "UNSET",
-	Charset:    "utf8",
-	DBFile:     "cloudreve.db",
-	Port:       3306,
-	UnixSocket: false,
+	Type:       Config().GetString("DatabaseConfig.Type"),
+	Charset:    Config().GetString("DatabaseConfig.Charset"),
+	DBFile:     Config().GetString("DatabaseConfig.DBFile"),
+	Port:       Config().GetInt("DatabaseConfig.Port"),
+	UnixSocket: Config().GetBool("DatabaseConfig.UnixSocket"),
 }
