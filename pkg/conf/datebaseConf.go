@@ -1,5 +1,7 @@
 package conf
 
+import "sync"
+
 // database 数据库
 // 数据库配置不需要动态加载
 type database struct {
@@ -13,13 +15,16 @@ type database struct {
 	Port        int
 	Charset     string
 	UnixSocket  bool
+	once        sync.Once
 }
 
+var databaseConfig = new(database)
+
 // DatabaseConfig 数据库配置
-var DatabaseConfig = &database{
-	Type:       Config().GetString("DatabaseConfig.Type"),
-	Charset:    Config().GetString("DatabaseConfig.Charset"),
-	DBFile:     Config().GetString("DatabaseConfig.DBFile"),
-	Port:       Config().GetInt("DatabaseConfig.Port"),
-	UnixSocket: Config().GetBool("DatabaseConfig.UnixSocket"),
+func DatabaseConfig() *database {
+	databaseConfig.once.Do(func() {
+		Config().Sub("database").Unmarshal(&databaseConfig)
+	})
+	return databaseConfig
+
 }
