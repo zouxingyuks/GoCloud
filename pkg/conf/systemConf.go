@@ -4,7 +4,7 @@ import "sync"
 
 // system 系统通用配置
 type system struct {
-	Mode  string
+	Mode  string `map`
 	Debug bool
 	once  sync.Once
 	//Listen        string
@@ -19,7 +19,7 @@ var systemConfig = new(system)
 // SystemConfig 系统公用静态配置
 func SystemConfig() *system {
 	systemConfig.once.Do(func() {
-		Config().Unmarshal(&systemConfig)
+		Config().Sub("system").Unmarshal(&systemConfig)
 	})
 	return systemConfig
 }
