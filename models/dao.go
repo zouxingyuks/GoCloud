@@ -9,6 +9,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mssql"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"sync"
 	"time"
 )
@@ -34,7 +35,7 @@ func initDao() {
 		// 测试模式下，使用内存数据库
 		db, err = gorm.Open("sqlite", ":memory:")
 	} else {
-		switch conf.DatabaseConfig.Type {
+		switch conf.DatabaseConfig().Type {
 		//case "UNSET", "sqlite":
 		//	// 未指定数据库或者明确指定为 sqlite 时，使用 SQLite 数据库
 		//	db, err = gorm.Open("sqlite", util.RelativePath(conf.DatabaseConfig.DBFile))
@@ -60,11 +61,11 @@ func initDao() {
 	//todo 这部分没看懂
 	// 处理表前缀
 	gorm.DefaultTableNameHandler = func(db *gorm.DB, defaultTableName string) string {
-		return conf.DatabaseConfig.TablePrefix + defaultTableName
+		return conf.DatabaseConfig().TablePrefix + defaultTableName
 	}
 
 	// Debug模式下，输出所有 SQL 日志
-	if conf.SystemConfig.Debug {
+	if conf.SystemConfig().Debug {
 		db.LogMode(true)
 	} else {
 		db.LogMode(false)
@@ -72,7 +73,7 @@ func initDao() {
 	// 设置连接池
 	//设置连接池
 	db.DB().SetMaxIdleConns(50)
-	if conf.DatabaseConfig.Type == "sqlite" || conf.DatabaseConfig.Type == "UNSET" {
+	if conf.DatabaseConfig().Type == "sqlite" || conf.DatabaseConfig().Type == "UNSET" {
 		db.DB().SetMaxOpenConns(1)
 	} else {
 		db.DB().SetMaxOpenConns(100)
@@ -106,7 +107,7 @@ func migration() {
 	//	instance.DeleteAll()
 	//}
 	// 自动迁移模式
-	if conf.DatabaseConfig.Type == "mysql" {
+	if conf.DatabaseConfig().Type == "mysql" {
 		db = db.Set("gorm:table_options", "ENGINE=InnoDB")
 	}
 
@@ -138,20 +139,21 @@ func migration() {
 }
 
 // 连接MySQL数据库
-// bash: go get gorm.io/driver/mysql
+//
+//go:generate go get -u gorm.io/driver/mysql
 func connMysql() (*gorm.DB, error) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=True&loc=Local", conf.DatabaseConfig.User, conf.DatabaseConfig.Password, conf.DatabaseConfig.Host, conf.DatabaseConfig.Port, conf.DatabaseConfig.Name, conf.DatabaseConfig.Charset)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=True&loc=Local", conf.DatabaseConfig().User, conf.DatabaseConfig().Password, conf.DatabaseConfig().Host, conf.DatabaseConfig().Port, conf.DatabaseConfig().Name, conf.DatabaseConfig().Charset)
 	db, err := gorm.Open("mysql", dsn)
 	return db, err
 }
 
 // 连接SQLite数据库
-// 需要安装 go get gorm.io/driver/sqlite
-//func connSQLite() {
-//	db, err := gorm.Open(sqlite.Open("data.db"), &gorm.Config{})
+//go:generate go get -u "github.com/jinzhu/gorm/dialects/sqlite"
+//func connSQLite() (*gorm.DB, error) {
+//	db, err := gorm.Open("sqlite3", "goCloud.db")
 //	if err != nil {
-//		log.Errorln("数据库连接失败")
+//		util.Log().Errorln("数据库连接失败")
 //		panic(err)
 //	}
-//	DB = db
+//	return db, err
 //}
