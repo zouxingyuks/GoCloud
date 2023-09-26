@@ -24,9 +24,12 @@ func Config() *viper.Viper {
 
 // AddPath 此方法专门供测试函数使用,可以用于临时增加配置文件的路径
 func AddPath(path string) {
+	//todo 记录日志
+	fmt.Printf("add path %s to config\n", path)
 	config.AddConfigPath(path)
 }
 func initConfig() {
+	fmt.Println("init config")
 	config.MergeConfigMap(defaultConfig)
 	configDir := "./config/"
 	configName := "config"
@@ -39,7 +42,6 @@ func initConfig() {
 	config.SetConfigType(configType)
 
 	// 配置文件出错
-
 	if err := config.ReadInConfig(); err != nil {
 		// 如果找不到配置文件，则提醒生成配置文件并创建它
 		var configFileNotFoundError viper.ConfigFileNotFoundError
@@ -71,4 +73,5 @@ func initConfig() {
 func ReloadConfig() {
 	//在此处更新一些配置
 	//有些配置是需要手动更改的，比如并发数之类的
+	systemConfig.Debug = Config().GetBool("system.debug")
 }
