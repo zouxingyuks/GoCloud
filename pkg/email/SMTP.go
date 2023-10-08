@@ -18,7 +18,7 @@ type SMTP struct {
 	wg      sync.WaitGroup
 }
 
-func NewSMTPClient() *SMTP {
+func NewSMTP() *SMTP {
 	var (
 		err  error
 		smtp = new(SMTP)
