@@ -8,12 +8,14 @@ import (
 	"github.com/go-mail/mail"
 	"github.com/panjf2000/ants/v2"
 	"github.com/pkg/errors"
+	"sync"
 )
 
 type SMTP struct {
 	pool *ants.Pool
 	log.IEntry
 	context context.Context
+	wg      sync.WaitGroup
 }
 
 func NewSMTPClient() *SMTP {
@@ -51,33 +53,44 @@ func (S *SMTP) watch() {
 	}()
 }
 
-// Send 发送邮件
-func (S *SMTP) Send(to, title, body string) error {
-	task := func() {
-		m := mail.NewMessage()
-		m.SetAddressHeader("From", conf.MailConfig().Smtp.Address, conf.MailConfig().Smtp.Name)
-		m.SetAddressHeader("Reply-To", conf.MailConfig().Smtp.ReplyTo, conf.MailConfig().Smtp.Name)
-		m.SetHeader("To", to)
-		m.SetHeader("Subject", title)
-		m.SetBody("text/html", body)
-		d := mail.NewDialer(conf.MailConfig().Smtp.Host, conf.MailConfig().Smtp.Port, conf.MailConfig().Smtp.User, conf.MailConfig().Smtp.Password)
-		fmt.Println(conf.MailConfig().Smtp)
-		d.StartTLSPolicy = mail.MandatoryStartTLS
-		if err := d.DialAndSend(m); err != nil {
-			S.Error(errors.Wrap(err, "发送邮件失败").Error())
-			return
-		}
-		//todo 编辑记录信息
-		S.Info(fmt.Sprintf("发送邮件给%s成功", to))
+// Send 发送邮件功能
+func (S *SMTP) send(to, title, body string) error {
+	m := mail.NewMessage()
+	m.SetAddressHeader("From", conf.MailConfig().Smtp.Address, conf.MailConfig().Smtp.Name)
+	m.SetAddressHeader("Reply-To", conf.MailConfig().Smtp.ReplyTo, conf.MailConfig().Smtp.Name)
+	m.SetHeader("To", to)
+	m.SetHeader("Subject", title)
+	m.SetBody("text/html", body)
+	d := mail.NewDialer(conf.MailConfig().Smtp.Host, conf.MailConfig().Smtp.Port, conf.MailConfig().Smtp.User, conf.MailConfig().Smtp.Password)
+	d.StartTLSPolicy = mail.MandatoryStartTLS
+	if err := d.DialAndSend(m); err != nil {
+		return errors.Wrap(err, "发送邮件失败")
 	}
-
-	err := S.pool.Submit(task)
-	if err != nil {
-		return errors.Wrapf(err, "提交任务失败")
-	}
+	//todo 编辑记录信息
+	S.Info(fmt.Sprintf("发送邮件给%s成功", to))
 	return nil
 }
 
+func (S *SMTP) Submit(to, title, body string) error {
+	S.wg.Add(1)
+	task := func() {
+		err := S.send(to, title, body)
+		//此问题不影响发送邮件，但是值得关注
+		if err != nil {
+			S.Warn(err.Error())
+		}
+		S.wg.Done()
+	}
+	err := S.pool.Submit(task)
+	if err != nil {
+		//因为提交失败了，所以不需要等待
+		S.wg.Done()
+		return errors.Wrapf(err, "提交任务失败")
+	}
+	return nil
+
+}
 func (S *SMTP) Close() {
+	S.wg.Wait()
 	S.pool.Release()
 }
