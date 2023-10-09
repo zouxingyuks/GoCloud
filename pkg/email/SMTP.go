@@ -11,6 +11,8 @@ import (
 	"sync"
 )
 
+const SMTPType int = 0
+
 type SMTP struct {
 	pool *ants.Pool
 	log.IEntry
