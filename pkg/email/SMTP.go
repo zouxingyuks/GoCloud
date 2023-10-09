@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-mail/mail"
+	"github.com/google/uuid"
 	"github.com/panjf2000/ants/v2"
 	"github.com/pkg/errors"
 	"sync"
@@ -40,12 +41,14 @@ func NewSMTP() *SMTP {
 }
 
 // Send 发送邮件功能
-func (S *SMTP) send(to, title, body string) error {
+func (S *SMTP) send(to, subject, body string) error {
 	m := mail.NewMessage()
 	m.SetAddressHeader("From", conf.MailConfig().Smtp.Address, conf.MailConfig().Smtp.Name)
 	m.SetAddressHeader("Reply-To", conf.MailConfig().Smtp.ReplyTo, conf.MailConfig().Smtp.Name)
 	m.SetHeader("To", to)
-	m.SetHeader("Subject", title)
+	m.SetHeader("Subject", subject)
+	//todo 修正Message-ID 记录功能
+	m.SetHeader("Message-ID", fmt.Sprintf("<%s@%s>", uuid.New().String(), conf.SMTPConfig().User)) // 添加 Message-ID
 	m.SetBody("text/html", body)
 	d := mail.NewDialer(conf.MailConfig().Smtp.Host, conf.MailConfig().Smtp.Port, conf.MailConfig().Smtp.User, conf.MailConfig().Smtp.Password)
 	d.StartTLSPolicy = mail.MandatoryStartTLS
