@@ -3,7 +3,7 @@ package model
 import "sync"
 
 type Mail struct {
-	Type string
+	Type int
 	Once sync.Once `mapstructure:"-"`
 	//同时最大发送数量
 	Size int
