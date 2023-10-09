@@ -1,9 +1,5 @@
 package email
 
-import (
-	"GoCloud/pkg/conf"
-)
-
 type Driver interface {
 	// Submit 提交邮件，由协程池进行协调发送
 	Submit(to, title, body string) error
@@ -15,9 +11,9 @@ type Driver interface {
 
 var driverInstance Driver
 
-func NewDriver() Driver {
-	switch conf.MailConfig().Type {
-	case "smtp":
+func NewDriver(driverType int) Driver {
+	switch driverType {
+	case SMTPType:
 		return NewSMTP()
 	}
 	return nil
