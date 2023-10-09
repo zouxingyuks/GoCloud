@@ -16,6 +16,7 @@ type SMTP struct {
 	log.IEntry
 	context context.Context
 	wg      sync.WaitGroup
+	cancel  context.CancelFunc
 }
 
 func NewSMTP() *SMTP {
@@ -31,26 +32,9 @@ func NewSMTP() *SMTP {
 		smtp.Panic(errors.Wrap(err, "初始化协程池失败").Error())
 		return nil
 	}
-	//todo 监控配置文件变化
-	//smtp.watch()
+	smtp.context, smtp.cancel = context.WithCancel(context.Background())
+	smtp.watch()
 	return smtp
-}
-
-// todo 检查是否需要加锁
-func (S *SMTP) watch() {
-	go func() {
-		for {
-			select {
-			case <-S.context.Done():
-				S.Info("SMTP协程池已关闭")
-				return
-			case <-conf.Change:
-				S.pool.Tune(conf.MailConfig().Size)
-				S.Info(fmt.Sprintf("SMTP协程池大小已调整为%d", conf.MailConfig().Size))
-			}
-
-		}
-	}()
 }
 
 // Send 发送邮件功能
@@ -90,7 +74,26 @@ func (S *SMTP) Submit(to, title, body string) error {
 	return nil
 
 }
+
+func (S *SMTP) watch() {
+	go func() {
+		for {
+			select {
+			case <-S.context.Done():
+				S.Info("SMTP 配置文件监听协程已退出")
+				return
+			case <-conf.Change:
+				S.pool.Tune(conf.MailConfig().Size)
+				S.Info(fmt.Sprintf("SMTP协程池大小已调整为%d", conf.MailConfig().Size))
+			}
+
+		}
+	}()
+}
+
 func (S *SMTP) Close() {
+	//取消对配置文件的监听
+	S.cancel()
 	S.wg.Wait()
 	S.pool.Release()
 }
