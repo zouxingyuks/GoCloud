@@ -1,7 +1,9 @@
-package models
+package dao
 
 import (
+	"GoCloud/models"
 	"GoCloud/pkg/conf"
+	"GoCloud/service/user/model"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	_ "github.com/glebarez/go-sqlite"
@@ -87,7 +89,7 @@ func initDao() {
 
 // 检查是否需要迁移，不可单独使用
 func needMigration() bool {
-	var setting Setting
+	var setting models.Setting
 	return db.Where("name = ?", "db_version_"+conf.RequiredDBVersion).First(&setting).Error != nil
 }
 func migration() {
@@ -112,8 +114,8 @@ func migration() {
 	}
 
 	db.AutoMigrate(
-		&User{},
-		&Setting{},
+		&model.User{},
+		&models.Setting{},
 		//&Group{}, &Policy{}, &Folder{}, &File{}, &Share{}
 	)
 	//// 创建初始存储策略
