@@ -37,3 +37,47 @@ func (V0) UserRegister(c *gin.Context) {
 func (v0) UserLogin(c *gin.Context) {
 	userLogin(c)
 }
+
+// UserActivate
+// @Summary 用户激活接口
+// @Description 用户激活账户
+// @Tags User
+// @Accept application/json
+// @Produce application/json
+// @Param token path string true "用户激活token"
+// @Success 200 {object} serializer.Response "激活成功" Example({"message": "激活成功"})
+// @Failure 400 {object} serializer.Response "参数错误" Example({"message": "参数错误"})
+// @Router /users/activate/{token} [get]
+func (v0) UserActivate(c *gin.Context) {
+	userActive(c)
+
+}
+
+// UserLogout
+// @Summary 用户登出接口
+// @Description 用户登出账户
+// @Tags User
+// @Accept application/json
+// @Produce application/json
+// @Success 200 {object} serializer.Response "登出成功" Example({"message": "登出成功"})
+// @Failure 400 {object} serializer.Response "参数错误" Example({"message": "参数错误"})
+// @Router /users/session [delete]
+func UserLogout(c *gin.Context) {
+	userLogout(c)
+
+}
+
+// UserOauth2Login
+// @Summary 用户第三方登录接口
+// @Description 用户第三方登录账户
+// @Tags User
+// @Accept application/json
+// @Produce application/json
+// @Param type path string true "用户第三方登录类型"
+// @Param code path string true "用户第三方登录code"
+// @Success 200 {object} serializer.Response "登录成功" Example({"message": "登录成功"})
+// @Failure 400 {object} serializer.Response "参数错误" Example({"message": "参数错误"})
+// @Router /users/oauth2/{type}/{code} [get]
+func UserOauth2Login() {
+
+}
