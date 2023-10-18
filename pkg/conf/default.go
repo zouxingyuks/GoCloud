@@ -31,7 +31,8 @@ var defaultConfig = map[string]interface{}{
 		Server:   "",
 		User:     "",
 		Password: "",
-		DB:       "0",
+		DB:       0,
+		PoolSize: 10,
 	},
 	"cors": cors{
 		AllowOrigins:     []string{"UNSET"},

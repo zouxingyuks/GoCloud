@@ -1,6 +1,9 @@
 package conf
 
-import "sync"
+import (
+	"log"
+	"sync"
+)
 
 // redis 配置
 // redis 可以使用动态配置
@@ -9,7 +12,8 @@ type redis struct {
 	Server   string
 	User     string
 	Password string
-	DB       string
+	PoolSize int
+	DB       int
 	once     sync.Once
 }
 
@@ -19,7 +23,9 @@ var redisConfig = new(redis)
 func RedisConfig() *redis {
 	redisConfig.once.Do(
 		func() {
+			log.Println("init redisConfig")
 			Config().Sub("redis").Unmarshal(&redisConfig)
+			log.Println("init redisConfig success")
 		})
 	return redisConfig
 }
