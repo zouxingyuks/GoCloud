@@ -8,8 +8,6 @@ type v0 struct {
 
 var V0 v0
 
-//todo 补充更多信息
-
 // UserRegister 用户注册接口
 // @Summary 用户注册接口
 // @Description 用户注册新账户
@@ -62,7 +60,7 @@ func (v0) UserActivate(c *gin.Context) {
 // @Success 200 {object} serializer.Response "登出成功" Example({"message": "登出成功"})
 // @Failure 400 {object} serializer.Response "参数错误" Example({"message": "参数错误"})
 // @Router /users/session [delete]
-func UserLogout(c *gin.Context) {
+func (v0) UserLogout(c *gin.Context) {
 	userLogout(c)
 
 }
@@ -78,6 +76,21 @@ func UserLogout(c *gin.Context) {
 // @Success 200 {object} serializer.Response "登录成功" Example({"message": "登录成功"})
 // @Failure 400 {object} serializer.Response "参数错误" Example({"message": "参数错误"})
 // @Router /users/oauth2/{type}/{code} [get]
-func UserOauth2Login() {
+func (v0) UserOauth2Login(c *gin.Context) {
+	userOauth2Login(c)
+}
 
+// UserOauth2Bind
+// @Summary 用户第三方绑定接口
+// @Description 用户第三方绑定账户
+// @Tags User
+// @Accept application/json
+// @Produce application/json
+// @Param type path string true "用户第三方绑定类型"
+// @Param code path string true "用户第三方登录code"
+// @Success 200 {object} serializer.Response "绑定成功" Example({"message": "绑定成功"})
+// @Failure 400 {object} serializer.Response "参数错误" Example({"message": "参数错误"})
+// @Router /users/oauth2/bind/{type}/{code} [get]
+func (v0) UserOauth2Bind(c *gin.Context) {
+	userOauth2Bind(c)
 }
