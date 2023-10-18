@@ -1,8 +1,14 @@
 package conf
 
-import "GoCloud/pkg/email/model"
+import (
+	"GoCloud/pkg/email/model"
+)
 
 var defaultConfig = map[string]interface{}{
+	"usercontroller": userController{
+		DefaultGroup: 1,
+		EmailVerify:  false,
+	},
 	"system": system{
 		Mode:          "master",
 		Debug:         false,
@@ -46,5 +52,8 @@ var defaultConfig = map[string]interface{}{
 			Name:     "",
 			Address:  "",
 		},
+	},
+	"site": site{
+		Domain: "localhost",
 	},
 }
