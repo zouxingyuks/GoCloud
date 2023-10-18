@@ -1,7 +1,7 @@
 package conf
 
 import (
-	"GoCloud/pkg/log"
+	"log"
 	"sync"
 )
 
@@ -22,9 +22,9 @@ var systemConfig = new(system)
 // SystemConfig 系统公用静态配置
 func SystemConfig() *system {
 	systemConfig.once.Do(func() {
-		log.NewEntry("init systemConfig...")
+		log.Println("init systemConfig...")
 		Config().Sub("system").Unmarshal(&systemConfig)
-		log.NewEntry("init systemConfig...end")
+		log.Println("init systemConfig...end")
 	})
 	return systemConfig
 }

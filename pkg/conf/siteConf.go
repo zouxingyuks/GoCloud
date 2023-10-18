@@ -1,7 +1,7 @@
 package conf
 
 import (
-	"GoCloud/pkg/log"
+	"log"
 	"sync"
 )
 
@@ -16,9 +16,9 @@ var siteInstance = new(site)
 func SiteConfig() *site {
 	siteInstance.once.Do(
 		func() {
-			log.NewEntry("inti siteConfig...")
+			log.Println("inti siteConfig...")
 			Config().Sub("site").Unmarshal(&siteInstance)
-			log.NewEntry("init siteConfig...end")
+			log.Println("init siteConfig...end")
 		})
 	return siteInstance
 }
