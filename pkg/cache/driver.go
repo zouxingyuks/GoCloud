@@ -15,10 +15,10 @@ type iDriver interface {
 	Set(key string, value interface{}, ttl Second) error
 
 	// Get 取值，并返回是否成功
-	Get(key string) (interface{}, bool)
+	Get(key string) (interface{}, error)
 
 	// Gets 批量取值，返回成功取值的map即不存在的值
-	Gets(keys []string, prefix string) (map[string]interface{}, []string)
+	Gets(keys []string, prefix string) (map[string]interface{}, []string, error)
 
 	// Sets 批量设置值，所有的key都会加上prefix前缀
 	Sets(values map[string]interface{}, prefix string) error
