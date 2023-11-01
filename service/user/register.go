@@ -39,35 +39,30 @@ func (p *Param) Register() serializer.Response {
 	if !isEmailRequired {
 		user.Status = dao.UserActive
 	}
+	//todo 继续测试此部分
 	//todo 对应 sql 的防注入
 	//先进行尝试创建
 	if err := dao.DB().Create(&user).Error; err != nil {
 		//创建失败后进一步判断错误情况
 
-		//检查已存在使用者是否尚未激活
+		//检查此账户状态
 		expectedUser, err := dao.GetUser(dao.WithEmail(user.Email))
 		//如若尚未激活，则将用户状态设置为未激活
-		if expectedUser.Status == dao.UserNotActivated {
-			return serializer.NewResponse(entry, 400, "Email already in use", serializer.WithErr(err))
-
+		if result, response := StatusCheck(expectedUser); err == nil && !result {
+			return response
+		} else if err != nil {
+			return serializer.NewResponse(entry, 500, "服务异常", serializer.WithErr(err))
 		} else {
-			//
 			return serializer.NewResponse(entry, 400, "Email already in use", serializer.WithErr(err))
 		}
 	}
-	// 发送激活邮件
-	if isEmailRequired {
-		sendActiveEmail()
+
+	//激活状态校验
+	if result, response := StatusCheck(user); !result {
+		return response
 	}
-	//todo 继续编写注册器
-	entry.Info("注册成功", log2.Field{
-		Key:   "Email",
-		Value: p.Email,
-	})
-	return serializer.Response{
-		Code: 200,
-		Msg:  "注册成功",
-	}
+
+	return serializer.NewResponse(entry, 200, "注册成功")
 }
 func defaultUserName(email string) string {
 	// 使用SHA-256哈希算法生成摘要
