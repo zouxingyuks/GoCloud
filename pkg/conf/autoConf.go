@@ -12,6 +12,7 @@ import (
 var (
 	config     = viper.New()
 	onceConfig sync.Once
+	Change     chan struct{}
 )
 
 func Config() *viper.Viper {
@@ -64,14 +65,10 @@ func initConfig() {
 			panic("请修改配置文件后重启程序")
 		}
 	}
+	//再次合并，为了覆盖默认值
 	config.WatchConfig()
 	config.OnConfigChange(func(e fsnotify.Event) {
 		fmt.Println("Config file changed:")
 		ReloadConfig()
 	})
-}
-func ReloadConfig() {
-	//在此处更新一些配置
-	//有些配置是需要手动更改的，比如并发数之类的
-	systemConfig.Debug = Config().GetBool("system.debug")
 }
