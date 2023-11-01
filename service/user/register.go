@@ -50,11 +50,16 @@ func (p *Param) Register() serializer.Response {
 		//如若尚未激活，则将用户状态设置为未激活
 		if result, response := StatusCheck(expectedUser); err == nil && !result {
 			return response
-		} else if err != nil {
-			return serializer.NewResponse(entry, 500, serializer.WithMsg("服务异常"), serializer.WithErr(err))
+
 		} else {
 			return serializer.NewResponse(entry, 400, serializer.WithMsg("Email already in use"), serializer.WithErr(err))
+
 		}
+		//todo 对于其他错误的处理
+		//else {
+		//	return serializer.NewResponse(entry, 500, serializer.WithMsg("服务异常"), serializer.WithErr(err), serializer.WithData(errors.Is(err, gorm.ErrDuplicatedKey)))
+		//
+		//}
 	}
 	return serializer.NewResponse(entry, 200, serializer.WithMsg("注册成功"))
 }
