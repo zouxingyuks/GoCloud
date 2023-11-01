@@ -9,7 +9,7 @@ import (
 type Response struct {
 	Code  int         `json:"-"`
 	Data  interface{} `json:"data,omitempty"`
-	Msg   string      `json:"msg"`
+	Msg   string      `json:"msg,omitempty"`
 	Error error       `json:"error,omitempty"`
 }
 

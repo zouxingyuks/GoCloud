@@ -15,7 +15,7 @@ func (p *Param) Register() serializer.Response {
 	entry := log2.NewEntry("service.user.register")
 	if !filter.Facade.IsValidEmail(p.Email) {
 		//行为日志
-		return serializer.NewResponse(entry, 400, "邮箱不合法", serializer.WithField(
+		return serializer.NewResponse(entry, 400, serializer.WithMsg("邮箱非法"), serializer.WithField(
 			log2.Field{
 				Key:   "Email",
 				Value: p.Email,
@@ -33,7 +33,7 @@ func (p *Param) Register() serializer.Response {
 	// 设置密码
 	err := user.SetPassword(p.Password)
 	if err != nil {
-		return serializer.NewResponse(entry, 400, "密码不合法")
+		return serializer.NewResponse(entry, 400, serializer.WithMsg("密码非法"))
 	}
 	//  如果不需要邮箱验证，则设置账户为激活模式
 	if !isEmailRequired {
@@ -51,18 +51,12 @@ func (p *Param) Register() serializer.Response {
 		if result, response := StatusCheck(expectedUser); err == nil && !result {
 			return response
 		} else if err != nil {
-			return serializer.NewResponse(entry, 500, "服务异常", serializer.WithErr(err))
+			return serializer.NewResponse(entry, 500, serializer.WithMsg("服务异常"), serializer.WithErr(err))
 		} else {
-			return serializer.NewResponse(entry, 400, "Email already in use", serializer.WithErr(err))
+			return serializer.NewResponse(entry, 400, serializer.WithMsg("Email already in use"), serializer.WithErr(err))
 		}
 	}
-
-	//激活状态校验
-	if result, response := StatusCheck(user); !result {
-		return response
-	}
-
-	return serializer.NewResponse(entry, 200, "注册成功")
+	return serializer.NewResponse(entry, 200, serializer.WithMsg("注册成功"))
 }
 func defaultUserName(email string) string {
 	// 使用SHA-256哈希算法生成摘要
