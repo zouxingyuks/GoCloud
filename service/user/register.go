@@ -8,6 +8,8 @@ import (
 	"GoCloud/pkg/util/filter"
 	"crypto/sha256"
 	"fmt"
+	"github.com/pkg/errors"
+	"gorm.io/gorm"
 )
 
 // Register  管理用户注册服务
@@ -23,13 +25,15 @@ func (p *Param) Register() serializer.Response {
 	}
 
 	// 相关设定
-	//此类变量应该是函数开始时就获取，避免临时修改导致的错误
+	//todo 避免竟态漏洞，考虑是否存在，如何防范
+	//此类变量应该是函数开始时就获取，避免竟态条件导致的错误
 	isEmailRequired := conf.UserConfig().EmailVerify
+
 	// 创建新的用户对象
-	user := dao.NewUser()
-	user.Email = p.Email
-	// 默认用户名为邮箱前缀
-	user.NickName = defaultUserName(p.Email)
+	user := dao.NewUser(
+		dao.WithEmail(p.Email),
+		// 默认用户名为邮箱前缀
+		dao.WithNickName(defaultUserName(p.Email)))
 	// 设置密码
 	err := user.SetPassword(p.Password)
 	if err != nil {
@@ -41,14 +45,25 @@ func (p *Param) Register() serializer.Response {
 	}
 	//todo 继续测试此部分
 	//todo 对应 sql 的防注入
-	//先进行尝试创建
-	if err := dao.DB().Create(&user).Error; err != nil {
-		//创建失败后进一步判断错误情况
 
-		//检查此账户状态
-		expectedUser, err := dao.GetUser(dao.WithEmail(user.Email))
+	var tUser dao.User
+	tUser, err = dao.GetUser(dao.WithEmail(user.Email))
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		//cErr := dao.DB().Create(&user).Error
+		err := dao.CreateUser(&user)
+		log2.NewEntry("service.user.register").Debug("create user", log2.Field{
+			Key:   "user",
+			Value: user,
+		}, log2.Field{
+			Key:   "err",
+			Value: err,
+		})
+		if err != nil {
+			return serializer.NewResponse(entry, 500, serializer.WithMsg("服务异常"), serializer.WithErr(err))
+		}
+	} else {
 		//如若尚未激活，则将用户状态设置为未激活
-		if result, response := StatusCheck(expectedUser); err == nil && !result {
+		if result, response := StatusCheck(tUser); err == nil && !result {
 			return response
 
 		} else {
@@ -61,6 +76,8 @@ func (p *Param) Register() serializer.Response {
 		//
 		//}
 	}
+	//分配角色,默认为user
+	dao.AddRoleForUser(user.UUID, "user")
 	return serializer.NewResponse(entry, 200, serializer.WithMsg("注册成功"))
 }
 func defaultUserName(email string) string {
