@@ -3,9 +3,10 @@ package user
 import (
 	"GoCloud/pkg/conf"
 	"GoCloud/pkg/dao"
-	log2 "GoCloud/pkg/log"
-	"GoCloud/pkg/serializer"
+	"GoCloud/pkg/log"
 	"GoCloud/pkg/util/filter"
+	"GoCloud/service/rbac"
+	"GoCloud/service/serializer"
 	"crypto/sha256"
 	"fmt"
 	"github.com/pkg/errors"
@@ -14,11 +15,11 @@ import (
 
 // Register  管理用户注册服务
 func (p *Param) Register() serializer.Response {
-	entry := log2.NewEntry("service.user.register")
+	entry := log.NewEntry("service.user.register")
 	if !filter.Facade.IsValidEmail(p.Email) {
 		//行为日志
 		return serializer.NewResponse(entry, 400, serializer.WithMsg("邮箱非法"), serializer.WithField(
-			log2.Field{
+			log.Field{
 				Key:   "Email",
 				Value: p.Email,
 			}))
@@ -51,10 +52,10 @@ func (p *Param) Register() serializer.Response {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		//cErr := dao.DB().Create(&user).Error
 		err := dao.CreateUser(&user)
-		log2.NewEntry("service.user.register").Debug("create user", log2.Field{
+		log.NewEntry("service.user.register").Debug("create user", log.Field{
 			Key:   "user",
 			Value: user,
-		}, log2.Field{
+		}, log.Field{
 			Key:   "err",
 			Value: err,
 		})
@@ -77,7 +78,7 @@ func (p *Param) Register() serializer.Response {
 		//}
 	}
 	//分配角色,默认为user
-	dao.AddRoleForUser(user.UUID, "user")
+	rbac.AssignRolesToUser(user.UUID, "user")
 	return serializer.NewResponse(entry, 200, serializer.WithMsg("注册成功"))
 }
 func defaultUserName(email string) string {
