@@ -7,10 +7,11 @@ import (
 
 // system 系统通用配置
 type system struct {
-	Mode  string `map`
-	Debug bool
-	once  sync.Once
-	//Listen        string
+	Mode          string `map`
+	Debug         bool
+	once          sync.Once
+	Host          string
+	Port          string
 	SessionSecret string
 	HashIDSalt    string
 	//GracePeriod   int
