@@ -6,13 +6,18 @@ import (
 
 var defaultConfig = map[string]interface{}{
 	"usercontroller": userController{
-		DefaultGroup: 1,
-		EmailVerify:  false,
+		EmailVerify: false,
 	},
 	"system": system{
-		Mode:          "master",
-		Debug:         false,
-		SessionSecret: "",
+		Mode:  "master",
+		Debug: false,
+		Host:  "localhost",
+		Port:  "9090",
+		Sessions: sessions{
+			Store:  "memory",
+			Secret: "your-session-secret",
+		},
+		HashIDSalt: "your-hash-id-salt",
 	},
 	"database": database{
 		Type:        "UNSET",
@@ -28,7 +33,7 @@ var defaultConfig = map[string]interface{}{
 	},
 	"redis": redis{
 		Network:  "tcp",
-		Server:   "",
+		Server:   "localhost:6379",
 		User:     "",
 		Password: "",
 		DB:       0,
@@ -40,7 +45,7 @@ var defaultConfig = map[string]interface{}{
 		AllowHeaders:     []string{"Cookie", "X-Cr-Policy", "Authorization", "Content-Length", "Content-Type", "X-Cr-Path", "X-Cr-FileName"},
 		AllowCredentials: false,
 		ExposeHeaders:    nil,
-		SameSite:         "Default",
+		SameSite:         "default",
 		Secure:           true,
 	},
 	"mail": model.Mail{
