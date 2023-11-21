@@ -1,6 +1,7 @@
 package conf
 
 import (
+	cachePkg "GoCloud/pkg/cache"
 	"GoCloud/pkg/log"
 	"sync"
 )
@@ -18,10 +19,14 @@ type database struct {
 	Port        int
 	Charset     string
 	UnixSocket  bool
-	once        sync.Once
+}
+type cache struct {
+	Kind  cachePkg.Kind
+	Redis redis
 }
 type dao struct {
 	Database database
+	Cache    cache
 }
 
 var daoConfig = new(struct {
@@ -31,7 +36,7 @@ var daoConfig = new(struct {
 
 func DaoConfig() *dao {
 	daoConfig.Do(func() {
-		log.NewEntry("conf").Debug("init DaoConfig...")
+		entry.Info("init DaoConfig...")
 		err := Config().Sub("dao").Unmarshal(&daoConfig.dao)
 		if err != nil {
 			log.NewEntry("conf").Panic("init DaoConfig error", log.Field{
@@ -39,7 +44,7 @@ func DaoConfig() *dao {
 				Value: err,
 			})
 		}
-		log.NewEntry("conf").Debug("init DaoConfig success")
+		entry.Info("init DaoConfig success")
 	})
 	return daoConfig.dao
 }
