@@ -27,7 +27,7 @@ type RegisterParam struct {
 // @Tags User
 // @Accept application/json
 // @Produce application/json
-// @Param user body user.Param true "用户注册信息"
+// @Param user body RegisterParam true "用户注册信息"
 // @Success 200 {object} serializer.Response "注册成功" Example({"message": "注册成功"})
 // @Failure 400 {object} serializer.Response "参数错误" Example({"message": "邮箱非法"})
 // @Failure 500 {object} serializer.Response "服务异常" Example({"message": "服务异常"})
