@@ -113,7 +113,7 @@ func Register(c *gin.Context) {
 	// 6. 发送激活邮件
 	if user.Status == dao.UserNotActivated {
 		// 发送激活邮件
-		err = SendActivationEmail(user.Email)
+		err = SendActivationEmail(user.UUID, user.Email)
 		if err != nil {
 			res := serializer.NewResponse(entry, 500, serializer.WithMsg("服务异常"), serializer.WithErr(err))
 			c.JSON(res.Code, res)
