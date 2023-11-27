@@ -6,14 +6,18 @@ import (
 	"GoCloud/pkg/log"
 	"GoCloud/service/email"
 	"GoCloud/service/serializer"
+	token2 "GoCloud/service/token"
 	"bytes"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
 	"html/template"
 	"net/url"
 	"time"
 )
+
+const activeAction = "active"
+
+var exp = time.Hour
 
 // UserActivate
 // @Summary 用户激活接口
@@ -22,8 +26,8 @@ import (
 // @Accept application/json
 // @Produce application/json
 // @Param token path string true "用户激活token"
-// @Success 200 {object} serializer.Response "激活成功" Example({"message": "激活成功"})
-// @Failure 400 {object} serializer.Response "参数错误" Example({"message": "参数错误"})
+// @Success 200 {object} serializer.Response "激活成功"
+// @Failure 400 {object} serializer.Response "参数错误"
 // @Router /users/activate/{token} [get]
 func UserActivate(c *gin.Context) {
 	entry := log.NewEntry("controller.user.active")
@@ -35,37 +39,55 @@ func UserActivate(c *gin.Context) {
 		c.JSON(res.Code, res)
 		return
 	}
+	//// 2.解析token
+	//token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+	//	return []byte(conf.StaticConfig().Session.Secret), nil
+	//})
+	//if err != nil {
+	//	res := serializer.NewResponse(entry, 500, serializer.WithMsg("服务异常"), serializer.WithErr(err))
+	//
+	//	c.JSON(res.Code, res)
+	//	return
+	//}
+	//
+	//// 3. 校验token
+	//// 3.1.校验token是否有效
+	//// 3.2.校验token中的uuid是否有效
+	//// 3.3.校验token中的act是否为active
+	//if claims, ok := token.Claims.(jwt.MapClaims); token.Valid && ok && claims["sub"] != nil && claims["act"] == "active" {
+	//	uuid := claims["sub"].(string)
+	//	_, err = dao.SetUser(dao.WithUUID(uuid), dao.WithStatus(dao.UserActive))
+	//	if err != nil {
+	//		res := serializer.NewResponse(entry, 500, serializer.WithMsg("服务异常"), serializer.WithErr(err))
+	//		c.JSON(res.Code, res)
+	//		return
+	//	}
+	//	res := serializer.NewResponse(entry, 200, serializer.WithMsg("激活成功"))
+	//	c.JSON(res.Code, res)
+	//	return
+	//} else {
+	//	res := serializer.NewResponse(entry, 401, serializer.WithMsg("无效的token"))
+	//	c.JSON(res.Code, res)
+	//	return
+	//}
 	// 2.解析token
-	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-		return []byte(conf.StaticConfig().Session.Secret), nil
-	})
+	sub, err := token2.Parse(tokenStr, activeAction)
+	if err != nil {
+		res := serializer.NewResponse(entry, 400, serializer.WithMsg("无效的token"), serializer.WithErr(err))
+		c.JSON(res.Code, res)
+		return
+	}
+	// 3. 激活用户
+	uuid := sub.(string)
+	_, err = dao.SetUser(dao.WithUUID(uuid), dao.WithStatus(dao.UserActive))
 	if err != nil {
 		res := serializer.NewResponse(entry, 500, serializer.WithMsg("服务异常"), serializer.WithErr(err))
-
 		c.JSON(res.Code, res)
 		return
 	}
-
-	// 3. 校验token
-	// 3.1.校验token是否有效
-	// 3.2.校验token中的uuid是否有效
-	// 3.3.校验token中的act是否为active
-	if claims, ok := token.Claims.(jwt.MapClaims); token.Valid && ok && claims["sub"] != nil && claims["act"] == "active" {
-		uuid := claims["sub"].(string)
-		_, err = dao.SetUser(dao.WithUUID(uuid), dao.WithStatus(dao.UserActive))
-		if err != nil {
-			res := serializer.NewResponse(entry, 500, serializer.WithMsg("服务异常"), serializer.WithErr(err))
-			c.JSON(res.Code, res)
-			return
-		}
-		res := serializer.NewResponse(entry, 200, serializer.WithMsg("激活成功"))
-		c.JSON(res.Code, res)
-		return
-	} else {
-		res := serializer.NewResponse(entry, 401, serializer.WithMsg("无效的token"))
-		c.JSON(res.Code, res)
-		return
-	}
+	res := serializer.NewResponse(entry, 200, serializer.WithMsg("激活成功"))
+	c.JSON(res.Code, res)
+	return
 }
 
 const defaultActivationEmailTmpl = `
@@ -104,7 +126,7 @@ func SendActivationEmail(uuid, To string) error {
 		To: To,
 	}
 	// 生成激活链接
-	if token, err := generateActiveToken(uuid); err != nil {
+	if token, err := token2.Generate(activeAction, uuid, exp); err != nil {
 		return errors.Wrap(err, "Error generating activation token")
 	} else {
 		u := url.URL{}
@@ -130,23 +152,6 @@ func SendActivationEmail(uuid, To string) error {
 		Value: To,
 	})
 	return err
-}
-
-func generateActiveToken(uuid string) (string, error) {
-	claims := &struct {
-		jwt.RegisteredClaims
-		Action string `json:"act"`
-	}{
-		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   uuid,                                          // 用户ID
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)), // 过期时间
-			IssuedAt:  jwt.NewNumericDate(time.Now()),                // 签发时间
-
-		},
-		Action: "active",
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(conf.StaticConfig().Session.Secret))
 }
 
 type ActivationEmailData struct {
