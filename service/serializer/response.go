@@ -1,7 +1,7 @@
 package serializer
 
 import (
-	"GoCloud/pkg/conf"
+	"GoCloud/conf"
 	"GoCloud/pkg/log"
 )
 
@@ -10,7 +10,7 @@ type Response struct {
 	Code  int         `json:"-"`
 	Data  interface{} `json:"data,omitempty"`
 	Msg   string      `json:"msg,omitempty"`
-	Error error       `json:"error,omitempty"`
+	Error string      `json:"error,omitempty"`
 }
 
 func NewResponse(entry log.IEntry, Code int, opts ...ResponseOption) Response {
@@ -67,7 +67,7 @@ func WithErr(err error) ResponseOption {
 	return newFuncOption(func(o *responseOption) {
 		// 生产环境隐藏底层报错
 		if err != nil && conf.SystemConfig().Debug {
-			o.Error = err
+			o.Error = err.Error()
 			o.Fields = append(o.Fields, log.Field{
 				Key:   "Error",
 				Value: err,
