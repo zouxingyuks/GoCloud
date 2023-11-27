@@ -9,9 +9,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// LoginParam 登录参数
 type LoginParam struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=8,max=20"`
+	Email    string `json:"email" binding:"required,email" example:"test@emali.com""`
+	Password string `json:"password" binding:"required,min=8,max=20" example:"12345678"`
 }
 
 const (
@@ -29,10 +30,10 @@ const (
 // @Accept application/json
 // @Produce application/json
 // @Param user body LoginParam true "用户登录信息"
-// @Success LoginSuccess {object} serializer.Response "登录成功" Example({serializer.User})
-// @Success LoginAlready {object} serializer.Response "登录成功" Example({"message": LoginAlreadyMsg})
-// @Failure 400 {object} serializer.Response "参数错误" Example({"message": ParamErrMsg})
-// @Failure 404 {object} serializer.Response “身份验证失败” Example({"message": CheckErrMsg})
+// @Success 200 {object} serializer.Response "登录成功"
+// @Success 201 {object} serializer.Response "请勿重复登陆"
+// @Failure 400 {object} serializer.Response "参数错误"
+// @Failure 404 {object} serializer.Response “身份验证失败”
 // @Router /users/session [post]
 func Login(c *gin.Context) {
 	entry := log.NewEntry("controller.user.login")
