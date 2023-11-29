@@ -2,32 +2,32 @@ package conf
 
 import (
 	"GoCloud/pkg/log"
+	"github.com/pkg/errors"
 	"sync"
 )
 
 // system 系统通用配置
 type system struct {
-	Mode          string `map`
-	Debug         bool
-	once          sync.Once
-	Host          string
-	Port          string
-	SessionSecret string
-	HashIDSalt    string
-	//GracePeriod   int
-	//ProxyHeader   string
+	Debug      bool
+	HashIDSalt string
 }
 
-var systemConfig = new(system)
+var systemConfig = new(struct {
+	once sync.Once
+	*system
+})
 
 // SystemConfig 系统公用静态配置
 func SystemConfig() *system {
 	systemConfig.once.Do(func() {
+		systemConfig.system = new(system)
 		log.NewEntry("conf").Info("init systemConfig...start")
-		Config().Sub("system").Unmarshal(&systemConfig)
+		err := Config().Sub("system").Unmarshal(&systemConfig.system)
+		if err != nil {
+			log.NewEntry("conf").Panic(errors.New("init systemConfig...failed").Error())
+		}
 		log.SetDebug(systemConfig.Debug)
 		log.NewEntry("conf").Info("init systemConfig...done")
-
 	})
-	return systemConfig
+	return systemConfig.system
 }

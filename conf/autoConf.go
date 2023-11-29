@@ -1,6 +1,7 @@
 package conf
 
 import (
+	"GoCloud/pkg/log"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
@@ -25,14 +26,13 @@ func Config() *viper.Viper {
 
 // AddPath 此方法专门供测试函数使用,可以用于临时增加配置文件的路径
 func AddPath(path string) {
-	//todo 记录日志
-	fmt.Printf("add path %s to config\n", path)
+	log.NewEntry("conf").Info("add path %s to config" + path)
 	config.AddConfigPath(path)
 }
 func initConfig() {
-	fmt.Println("init config")
+	log.NewEntry("conf").Info("init config")
 	config.MergeConfigMap(defaultConfig)
-	configDir := "./config/"
+	configDir := "./"
 	configName := "config"
 	configType := "yaml"
 	//设置配置文件路径
@@ -68,7 +68,6 @@ func initConfig() {
 	//再次合并，为了覆盖默认值
 	config.WatchConfig()
 	config.OnConfigChange(func(e fsnotify.Event) {
-		fmt.Println("Config file changed:")
 		ReloadConfig()
 	})
 }

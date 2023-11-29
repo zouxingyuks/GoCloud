@@ -1,8 +1,8 @@
 package conf
 
 import (
-	cachePkg "GoCloud/pkg/cache"
 	"GoCloud/pkg/log"
+	cachePkg "GoCloud/service/cache"
 	"sync"
 )
 
@@ -36,7 +36,7 @@ var daoConfig = new(struct {
 
 func DaoConfig() *dao {
 	daoConfig.Do(func() {
-		entry.Info("init DaoConfig...")
+		log.NewEntry("conf").Info("init DaoConfig...")
 		err := Config().Sub("dao").Unmarshal(&daoConfig.dao)
 		if err != nil {
 			log.NewEntry("conf").Panic("init DaoConfig error", log.Field{
@@ -44,7 +44,7 @@ func DaoConfig() *dao {
 				Value: err,
 			})
 		}
-		entry.Info("init DaoConfig success")
+		log.NewEntry("conf").Info("init DaoConfig success")
 	})
 	return daoConfig.dao
 }

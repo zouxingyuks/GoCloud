@@ -2,7 +2,7 @@ package conf
 
 import (
 	"GoCloud/pkg/email/model"
-	"log"
+	"GoCloud/pkg/log"
 )
 
 var (
@@ -13,9 +13,9 @@ var (
 // MailConfig 邮件配置
 func MailConfig() *model.Mail {
 	mailConfig.Once.Do(func() {
-		log.Printf("init mailConfig...")
+		log.NewEntry("conf").Info("init mailConfig...")
 		Config().Sub("mail").Unmarshal(&mailConfig)
-		log.Printf("init mailConfig...end")
+		log.NewEntry("conf").Info("init mailConfig...end")
 	})
 	return mailConfig
 }
@@ -23,9 +23,9 @@ func MailConfig() *model.Mail {
 // SMTPConfig SMTP配置
 func SMTPConfig() *model.SMTP {
 	smtpConfig.Once.Do(func() {
-		log.Printf("init smtpConfig...")
+		log.NewEntry("conf").Info("init smtpConfig...")
 		smtpConfig = &MailConfig().Smtp
-		log.Printf("init smtpConfig...end")
+		log.NewEntry("conf").Info("init smtpConfig...end")
 	})
 	return smtpConfig
 }

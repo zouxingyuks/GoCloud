@@ -2,34 +2,58 @@ package conf
 
 import (
 	"GoCloud/pkg/email/model"
+	"github.com/gin-contrib/sessions"
+	"net/http"
 )
 
-var defaultConfig = map[string]interface{}{
-	"usercontroller": userController{
-		EmailVerify: false,
-	},
-	"system": system{
-		Mode:  "master",
-		Debug: false,
-		Host:  "localhost",
-		Port:  "9090",
-		Sessions: sessions{
+var defaultConfig = map[string]any{
+	"static": static{
+		Mode: "master",
+		Host: "0.0.0.0",
+		Port: "8281",
+		Session: session{
 			Store:  "memory",
 			Secret: "your-session-secret",
+			Option: sessions.Options{
+				HttpOnly: true,
+				//86400 是一天
+				MaxAge:   1 * 86400,
+				Path:     "/",
+				SameSite: http.SameSiteDefaultMode,
+				Secure:   false,
+			},
 		},
+	},
+	"service": service{User: userService{
+		RegisterEnable: true,
+		EmailVerify:    false,
+		LoginLimit: struct {
+			Enable bool
+			Period int
+			Count  int
+		}{
+			Enable: false,
+			Period: 0,
+			Count:  0,
+		},
+	}},
+	"system": system{
+		Debug:      false,
 		HashIDSalt: "your-hash-id-salt",
 	},
-	"database": database{
-		Type:        "UNSET",
-		User:        "",
-		Password:    "",
-		Host:        "",
-		Name:        "",
-		TablePrefix: "",
-		DBFile:      "cloudreve.db",
-		Port:        3306,
-		Charset:     "utf8",
-		UnixSocket:  false,
+	"dao": dao{
+		Database: database{
+			Type:        "UNSET",
+			User:        "",
+			Password:    "",
+			Host:        "",
+			Name:        "",
+			TablePrefix: "",
+			DBFile:      "cloudreve.db",
+			Port:        3306,
+			Charset:     "utf8",
+			UnixSocket:  false,
+		},
 	},
 	"redis": redis{
 		Network:  "tcp",
@@ -61,5 +85,6 @@ var defaultConfig = map[string]interface{}{
 	},
 	"site": site{
 		Domain: "localhost",
+		SSL:    false,
 	},
 }

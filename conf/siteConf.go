@@ -8,6 +8,7 @@ import (
 type site struct {
 	Domain string
 	once   sync.Once
+	SSL    bool
 }
 
 var siteInstance = new(site)
