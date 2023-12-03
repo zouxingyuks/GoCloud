@@ -59,6 +59,7 @@ func Login(c *gin.Context) {
 	if uuid != nil && uuid.(string) == u.UUID {
 		res := serializer.NewResponse(entry, LoginAlready, serializer.WithMsg(LoginAlreadyMsg), serializer.WithErr(err))
 		c.JSON(res.Code, res)
+		return
 	}
 	//4. 密码校验
 	if authOK, err := crypto.NewCrypto(crypto.PasswordCrypto).Check([]byte(param.Password), []byte(u.Password)); !authOK {
