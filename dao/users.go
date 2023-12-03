@@ -5,6 +5,7 @@ import (
 	"GoCloud/service/cache"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
 	"math/rand"
 )
 
@@ -124,4 +125,24 @@ func GetUserByUUID(uuid string) (*User, error) {
 		return nil, errors.Wrap(err, "set cache error")
 	}
 	return u, nil
+}
+
+// SetUser 设置用户信息
+func SetUser(uuid string, opts ...UserOption) (u *User, err error) {
+	//设置目标用户
+	o := new(User)
+	for _, opt := range opts {
+		opt.apply(o)
+	}
+	//先在缓存中查找，更新一次缓存，用于保存用户信息
+	u, err = refreshUserInCache(uuid)
+	err = DB().Where("uuid = ?", uuid).Session(&gorm.Session{NewDB: false}).Updates(o).Error
+	if err != nil {
+		//如果更新失败，就把缓存中的用户信息还原
+		err = DB().Where("uuid = ?", uuid).Session(&gorm.Session{NewDB: false}).Updates(u).Error
+		return nil, errors.Wrap(err, "set user error")
+	}
+	//更新缓存
+	u, err = refreshUserInCache(uuid)
+	return u, err
 }

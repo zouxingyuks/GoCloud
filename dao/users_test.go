@@ -56,3 +56,13 @@ func Test_refreshUserInCache(t *testing.T) {
 	}
 	t.Log(u)
 }
+
+func TestSetUser(t *testing.T) {
+	conf.AddPath("..")
+	log.SetFilepath("../log/zap.log")
+	u, err := SetUser("1182bd1f-9d5d-55f9-bb2f-7104adfbb513", WithEmail("1308345487@qq.com"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(u)
+}
