@@ -9,7 +9,7 @@ import (
 )
 
 // 从缓存中查询用户信息
-func findInCache(uuid string) (u *User, err error) {
+func findUserInCache(uuid string) (u *User, err error) {
 	u = new(User)
 	data, err := Cache().HGetAll("uuid:" + uuid)
 	if err != nil {
@@ -25,12 +25,15 @@ func findInCache(uuid string) (u *User, err error) {
 	return u, nil
 }
 
-// storeInCache 将用户信息存入缓存
-func storeInCache(u *User) (err error) {
+// storeUserInCache 将用户信息存入缓存
+func storeUserInCache(u *User) (err error) {
 	//预防缓存雪崩，设置随机过期时间
 	ttl := cache.Second(600 + rand.Intn(600)) // 10min~20min
 	// email 与 uuid 的映射
-	Cache().Set("email:"+u.Email, u.UUID, ttl)
+	err = Cache().Set("email:"+u.Email, u.UUID, ttl)
+	if err != nil {
+		return errors.Wrap(err, "set cache error")
+	}
 	data, err := util.StructToMapF1(u)
 	if err != nil {
 		return errors.Wrap(err, "struct to map error")
@@ -50,7 +53,7 @@ func GetUserByEmail(email string) (u *User, err error) {
 	t, err := Cache().Get("email:" + email)
 	u.UUID = t.(string)
 	if err == nil {
-		return findInCache(u.UUID)
+		return findUserInCache(u.UUID)
 	}
 	//2. 如果缓存中没有，就去数据库中查找
 	u = new(User)
@@ -58,7 +61,7 @@ func GetUserByEmail(email string) (u *User, err error) {
 	if err != nil {
 		return u, errors.Wrap(err, "get user from db error")
 	}
-	err = storeInCache(u)
+	err = storeUserInCache(u)
 	if err != nil {
 		return nil, errors.Wrap(err, "set cache error")
 	}
@@ -71,7 +74,7 @@ func GetUserByUUID(uuid string) (*User, error) {
 		return nil, errors.New("uuid is empty")
 	}
 	//先在缓存中查找
-	u, err := findInCache(uuid)
+	u, err := findUserInCache(uuid)
 	if err == nil && u != nil {
 		return u, nil
 	}
@@ -81,7 +84,7 @@ func GetUserByUUID(uuid string) (*User, error) {
 	if err != nil {
 		return u, errors.Wrap(err, "get user from db error")
 	}
-	err = storeInCache(u)
+	err = storeUserInCache(u)
 	if err != nil {
 		return nil, errors.Wrap(err, "set cache error")
 	}
