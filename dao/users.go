@@ -15,16 +15,7 @@ func GetUserByEmail(email string) (u *User, err error) {
 	t, err := Cache().Get("email:" + email)
 	u.UUID = t.(string)
 	if err == nil {
-		//如果缓存中有，就直接从缓存中取出
-		data, err := Cache().HGetAll("uuid:" + u.UUID)
-		if err != nil {
-			return nil, errors.Wrap(err, "get user from cache error")
-		}
-		err = mapstructure.Decode(data, u)
-		if err != nil {
-			return nil, errors.Wrap(err, "mapstructure decode error")
-		}
-		return u, nil
+		return findInCache(u.UUID)
 	}
 	//2. 如果缓存中没有，就去数据库中查找
 	u = new(User)
@@ -38,6 +29,20 @@ func GetUserByEmail(email string) (u *User, err error) {
 	err = Cache().HMSet("uuid:"+u.UUID, data, cache.Second(600+rand.Intn(600)))
 	if err != nil {
 		return nil, errors.Wrap(err, "set cache error")
+	}
+	return u, nil
+}
+
+// 从缓存中查询用户信息
+func findInCache(uuid string) (u *User, err error) {
+	u = new(User)
+	data, err := Cache().HGetAll("uuid:" + uuid)
+	if err != nil {
+		return nil, errors.Wrap(err, "get user from cache error")
+	}
+	err = mapstructure.Decode(data, u)
+	if err != nil {
+		return nil, errors.Wrap(err, "mapstructure decode error")
 	}
 	return u, nil
 }
