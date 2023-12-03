@@ -11,8 +11,8 @@ import (
 
 // LoginParam 登录参数
 type LoginParam struct {
-	Email    string `json:"email" binding:"required,email" example:"test@emali.com""`
-	Password string `json:"password" binding:"required,min=8,max=20" example:"12345678"`
+	Email    string `form:"userName" json:"email" binding:"required,email" example:"test@emali.com"`
+	Password string `form:"password" json:"password" binding:"required,min=8,max=20" example:"12345678"`
 }
 
 const (
@@ -48,21 +48,19 @@ func Login(c *gin.Context) {
 
 	//2. 用户信息获取与存在性校验
 	//先在缓存中用email查找uuid,如果没有再去数据库中查找，这主要是为了防止在反复登陆时频繁访问数据库（虽然进行了接口的流量限制）
-	uuid := ""
-	iUUID, err := dao.Cache().Get("email:" + param.Email)
-	if err == nil {
-		uuid = iUUID.(string)
-	}
-	//账号校验
-	u, err := dao.GetUser(dao.WithEmail(param.Email), dao.WithUUID(uuid))
+	u, err := dao.GetUserByEmail(param.Email)
 	if err != nil {
-		// 此处之所以不指出是账号错误还是密码错误，是为了防止账号被暴力破解
-		res := serializer.NewResponse(entry, 400, serializer.WithMsg(ParamErrMsg), serializer.WithErr(err))
+		res := serializer.NewResponse(entry, 404, serializer.WithMsg(CheckErrMsg), serializer.WithErr(err))
 		c.JSON(res.Code, res)
 		return
 	}
-
-	//3. 密码校验
+	//3. 不允许重复登陆
+	uuid := util.Session().Get(c, "uuid")
+	if uuid != nil && uuid.(string) == u.UUID {
+		res := serializer.NewResponse(entry, LoginAlready, serializer.WithMsg(LoginAlreadyMsg), serializer.WithErr(err))
+		c.JSON(res.Code, res)
+	}
+	//4. 密码校验
 	if authOK, err := crypto.NewCrypto(crypto.PasswordCrypto).Check([]byte(param.Password), []byte(u.Password)); !authOK {
 		res := serializer.NewResponse(entry, 400, serializer.WithMsg(CheckErrMsg), serializer.WithErr(err))
 		c.JSON(res.Code, res)
@@ -70,7 +68,7 @@ func Login(c *gin.Context) {
 	}
 
 	//4. 用户状态校验
-	if result, response := StatusCheck(u); !result {
+	if result, response := StatusCheck(*u); !result {
 		c.JSON(response.Code, response)
 		return
 	}
@@ -83,25 +81,19 @@ func Login(c *gin.Context) {
 	//	})
 	//	return serializer.Response{Code: 203}
 	//}
-
-	//6. 不允许重复登陆
-	iUUID = util.Session().Get(c, "uuid")
-	if iUUID != nil && iUUID.(string) == u.UUID {
-		res := serializer.NewResponse(entry, LoginAlready, serializer.WithMsg(LoginAlreadyMsg), serializer.WithErr(err))
+	//准备清洗后的用户信息
+	user, err := serializer.BuildUser(*u)
+	if err != nil {
+		res := serializer.NewResponse(entry, serializer.ServerErr, serializer.WithMsg(serializer.ServerErrMsg), serializer.WithErr(err))
 		c.JSON(res.Code, res)
+		return
 	}
 
 	//7. 登陆成功，清空并设置session
 	util.Session().Set(c, map[string]interface{}{
 		"uuid": u.UUID,
 	})
-	//返回清洗后的用户信息
-	user, err := serializer.BuildUser(u)
-	if err != nil {
-		res := serializer.NewResponse(entry, serializer.ServerErr, serializer.WithMsg(serializer.ServerErrMsg), serializer.WithErr(err))
-		c.JSON(res.Code, res)
-		return
-	}
+
 	res := serializer.NewResponse(entry, LoginSuccess, serializer.WithData(user))
 	c.JSON(res.Code, res)
 	return
