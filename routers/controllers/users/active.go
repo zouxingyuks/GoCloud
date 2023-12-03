@@ -49,7 +49,7 @@ func UserActivate(c *gin.Context) {
 	}
 	// 3. 激活用户
 	uuid := sub.(string)
-	_, err = dao.SetUser(dao.WithUUID(uuid), dao.WithStatus(dao.UserActive))
+	_, err = dao.SetUser(uuid, dao.WithStatus(dao.UserActive))
 	if err != nil {
 		res := serializer.NewResponse(entry, 500, serializer.WithMsg("服务异常"), serializer.WithErr(err))
 		c.JSON(res.Code, res)
