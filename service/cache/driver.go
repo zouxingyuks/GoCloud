@@ -1,6 +1,9 @@
 package cache
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+	"time"
+)
 
 type Second int
 type Config any
@@ -96,4 +99,17 @@ func WithConf[T RedisConfig | TempConfig](conf T) Option {
 }
 
 type TempConfig struct {
+}
+
+func makeTime(ttl Second) time.Duration {
+	//1. 如果ttl为-1则代表永不过期
+	if ttl == -1 {
+		return -1
+	}
+	//2. 如果ttl为0则代表使用默认过期时间:10分钟
+	if ttl == 0 {
+		return time.Duration(600) * time.Second
+	}
+
+	return time.Duration(ttl) * time.Second
 }
