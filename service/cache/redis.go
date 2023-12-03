@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
 	"sync"
@@ -69,6 +70,7 @@ func (r *redisStore) HGet(key string, field string) (any, error) {
 }
 
 // HMGet 获取hash值的多个字段
+// 返回值中，如果有字段不存在，返回err
 func (r *redisStore) HMGet(key string, fields []string) (map[string]interface{}, error) {
 	ctx := context.Background()
 	val, err := r.client.HMGet(ctx, key, fields...).Result()
@@ -76,7 +78,11 @@ func (r *redisStore) HMGet(key string, fields []string) (map[string]interface{},
 		return nil, errors.Wrapf(err, "redis hmget key: %s", key)
 	}
 	res := make(map[string]interface{})
+	fmt.Println(val)
 	for i, v := range val {
+		if v == nil {
+			return nil, errors.New(fmt.Sprintf("redis hmget key: %s field: %s not found", key, fields[i]))
+		}
 		res[fields[i]] = v
 	}
 	return res, nil

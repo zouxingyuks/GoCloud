@@ -53,9 +53,21 @@ func TestHMSet(t *testing.T) {
 
 func TestHMGet(t *testing.T) {
 	d := testDriver()
+	// 正常获取
 	val, err := d.HMGet("setting", []string{
 		"siteName",
 		"login_captcha",
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(val)
+
+	// 获取不存在的字段
+	val, err = d.HMGet("setting", []string{
+		"siteName",
+		"login_captcha",
+		"test",
 	})
 	if err != nil {
 		panic(err)
