@@ -6,7 +6,6 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
 	"sync"
-	"time"
 )
 
 // redisStore redis存储驱动
@@ -49,7 +48,7 @@ func (r *redisStore) Get(key string) (any, error) {
 // Set 存储值
 func (r *redisStore) Set(key string, value interface{}, ttl Second) error {
 	ctx := context.Background()
-	err := r.client.Set(ctx, key, value, time.Duration(ttl)*time.Second).Err()
+	err := r.client.Set(ctx, key, value, makeTime(ttl)).Err()
 	if err != nil {
 		return errors.Wrapf(err, "redis set key: %s", key)
 	}
@@ -104,7 +103,7 @@ func (r *redisStore) HGetAll(key string) (map[string]string, error) {
 func (r *redisStore) HSet(key string, field string, value interface{}, ttl Second) error {
 	ctx := context.Background()
 	err := r.client.HSet(ctx, key, field, value).Err()
-	err = r.client.Expire(ctx, key, time.Duration(ttl)*time.Second).Err()
+	err = r.client.Expire(ctx, key, makeTime(ttl)).Err()
 	if err != nil {
 		return errors.Wrapf(err, "redis hset key: %s", key)
 	}
@@ -115,7 +114,7 @@ func (r *redisStore) HSet(key string, field string, value interface{}, ttl Secon
 func (r *redisStore) HMSet(key string, values map[string]interface{}, ttl Second) error {
 	ctx := context.Background()
 	err := r.client.HMSet(ctx, key, values).Err()
-	err = r.client.Expire(ctx, key, time.Duration(ttl)*time.Second).Err()
+	err = r.client.Expire(ctx, key, makeTime(ttl)).Err()
 	if err != nil {
 		return errors.Wrapf(err, "redis hmset key: %s", key)
 	}
