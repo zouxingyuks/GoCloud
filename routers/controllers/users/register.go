@@ -4,9 +4,9 @@ import (
 	"GoCloud/conf"
 	"GoCloud/dao"
 	"GoCloud/pkg/crypto"
+	"GoCloud/pkg/filter"
 	"GoCloud/pkg/log"
 	"GoCloud/pkg/rbac"
-	"GoCloud/pkg/util/filter"
 	"GoCloud/service/serializer"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -28,9 +28,9 @@ type RegisterParam struct {
 // @Accept application/json
 // @Produce application/json
 // @Param user body RegisterParam true "用户注册信息"
-// @Success 200 {object} serializer.Response "注册成功" Example({"message": "注册成功"})
-// @Failure 400 {object} serializer.Response "参数错误" Example({"message": "邮箱非法"})
-// @Failure 500 {object} serializer.Response "服务异常" Example({"message": "服务异常"})
+// @Success 200 {object} serializer.Response "注册成功"
+// @Failure 400 {object} serializer.Response "参数错误"
+// @Failure 500 {object} serializer.Response "服务异常"
 // @Router /users [post]
 func Register(c *gin.Context) {
 	entry := log.NewEntry("controller.user.register")
@@ -86,11 +86,11 @@ func Register(c *gin.Context) {
 	}
 
 	// 4. 检测邮箱是否已经注册
-	var tUser dao.User
-	tUser, err = dao.GetUser(dao.WithEmail(user.Email))
+	var tUser *dao.User
+	tUser, err = dao.GetUserByEmail(user.Email)
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
 		// 如果已经注册，检查用户状态
-		_, res := StatusCheck(tUser)
+		_, res := StatusCheck(*tUser)
 		c.JSON(res.Code, res)
 		return
 	}
