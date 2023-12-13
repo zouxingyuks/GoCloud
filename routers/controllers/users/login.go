@@ -7,6 +7,7 @@ import (
 	"GoCloud/pkg/util"
 	"GoCloud/service/serializer"
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 // LoginParam 登录参数
@@ -16,7 +17,6 @@ type LoginParam struct {
 }
 
 const (
-	LoginSuccess    = 200
 	LoginAlready    = 201
 	LoginAlreadyMsg = "请勿重复登陆"
 	ParamErrMsg     = "参数错误"
@@ -33,7 +33,10 @@ const (
 // @Success 200 {object} serializer.Response "登录成功"
 // @Success 201 {object} serializer.Response "请勿重复登陆"
 // @Failure 400 {object} serializer.Response "参数错误"
-// @Failure 404 {object} serializer.Response “身份验证失败”
+// @Failure 404 {object} serializer.Response “用户不存在”
+// @Failure 423 {object} serializer.Response "用户等待激活|用户被封禁"
+// @Failure 429 {object} serializer.Response "请求过于频繁"
+// @Failure 500 {object} serializer.Response "服务器错误"
 // @Router /users/session [post]
 func Login(c *gin.Context) {
 	entry := log.NewEntry("controller.user.login")
@@ -41,7 +44,7 @@ func Login(c *gin.Context) {
 	// 1. 参数校验
 	err := c.ShouldBindJSON(&param)
 	if err != nil {
-		res := serializer.NewResponse(entry, 400, serializer.WithMsg(ParamErrMsg), serializer.WithErr(err))
+		res := serializer.NewResponse(entry, http.StatusBadRequest, serializer.WithMsg(ParamErrMsg), serializer.WithErr(err))
 		c.JSON(res.Code, res)
 		return
 	}
@@ -50,7 +53,7 @@ func Login(c *gin.Context) {
 	//先在缓存中用email查找uuid,如果没有再去数据库中查找，这主要是为了防止在反复登陆时频繁访问数据库（虽然进行了接口的流量限制）
 	u, err := dao.GetUserByEmail(param.Email)
 	if err != nil {
-		res := serializer.NewResponse(entry, 404, serializer.WithMsg(CheckErrMsg), serializer.WithErr(err))
+		res := serializer.NewResponse(entry, http.StatusNotFound, serializer.WithMsg(CheckErrMsg), serializer.WithErr(err))
 		c.JSON(res.Code, res)
 		return
 	}
@@ -95,7 +98,7 @@ func Login(c *gin.Context) {
 		"uuid": u.UUID,
 	})
 
-	res := serializer.NewResponse(entry, LoginSuccess, serializer.WithData(user))
+	res := serializer.NewResponse(entry, http.StatusOK, serializer.WithData(user))
 	c.JSON(res.Code, res)
 	return
 }
