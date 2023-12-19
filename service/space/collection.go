@@ -6,9 +6,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-// NewSpace 创建新的集合
+// NewCollection 创建新的集合
 // collection 集合名称，集合名称是唯一的。
-func NewSpace(Name string) error {
+func NewCollection(Name string) error {
 
 	// 1.1 检查集合名称是否为空
 	if Name == "" {
@@ -41,8 +41,8 @@ func NewSpace(Name string) error {
 	return nil
 }
 
-// DeleteSpace 删除指定的集合
-func DeleteSpace(Name string) error {
+// DeleteCollection 删除指定的集合
+func DeleteCollection(Name string) error {
 	err := FilesDB().Collection(Name).Drop(context.Background())
 	if err != nil {
 		return errors.Wrap(err, "删除集合失败")
@@ -50,8 +50,8 @@ func DeleteSpace(Name string) error {
 	return nil
 }
 
-// ExistSpace 检查集合是否存在
-func ExistSpace(Name string) (bool, error) {
+// ExistCollection 检查集合是否存在
+func ExistCollection(Name string) (bool, error) {
 	result, err := FilesDB().ListCollectionNames(context.Background(), bson.M{
 		"name": Name,
 	})
