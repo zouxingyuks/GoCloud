@@ -43,11 +43,11 @@ import (
 //	}
 //	// 2.检查元数据名称长度是否合法
 //	// 写入数据
-//	err = FilesDB().CreateCollection(context.Background(), data.Root)
+//	err = FilesDB().CreateCollection(context.Background(), data.Space)
 //	if err != nil {
 //		return errors.Wrap(err, "创建集合失败")
 //	}
-//	collection := FilesDB().Collection(data.Root)
+//	collection := FilesDB().Collection(data.Space)
 //
 //	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 //	defer cancel()
@@ -63,7 +63,7 @@ import (
 // 此处不考虑结点是否存在的问题,或是结点合法性的问题，此问题交由上层业务解决
 func newNode(data MetaData) error {
 	//解析 node 对应的集合
-	collection := FilesDB().Collection(data.Root)
+	collection := FilesDB().Collection(data.Space)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	// 更新操作
@@ -92,7 +92,7 @@ func newNode(data MetaData) error {
 // CreateDir 在指定的集合中创建文件夹
 func CreateDir(data MetaData) error {
 	//解析 node 对应的集合
-	collection := FilesDB().Collection(data.Root)
+	collection := FilesDB().Collection(data.Space)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -124,7 +124,7 @@ func CheckName(name string) bool {
 // todo 感觉会有bug
 func CheckNodeExit(data MetaData) (bool, error) {
 	//解析 node 对应的集合
-	collection := FilesDB().Collection(data.Root)
+	collection := FilesDB().Collection(data.Space)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if data.Parent == "/" {
