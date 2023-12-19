@@ -1,32 +1,15 @@
-package upload
+package local
 
 import (
 	"github.com/pkg/errors"
-	"io"
 	"os"
 	"path"
 	"strings"
 	"time"
 )
 
-type Storage interface {
-	GetRoot() string
-	Save(vPath string, reader io.Reader, overwrite bool) error
-	Del(vPath string) error
-}
-type LocalStore struct {
-	rootPath string
-}
-
-func (l *LocalStore) GetRoot() string {
-	return l.rootPath
-}
-
-func (l *LocalStore) Save(vPath string, reader io.Reader, overwrite bool) error {
-
-	// 指定文件要保存的路径
-	filepath := path.Join(l.GetRoot(), vPath)
-
+// Check 检查文件是否存在，如果存在则根据 overwrite 参数决定是否覆盖
+func (l *Store) Check(overwrite bool, filepath string) (string, error) {
 	// 检查文件是否存在
 	if _, err := os.Stat(filepath); err == nil {
 		// 文件存在
@@ -36,21 +19,9 @@ func (l *LocalStore) Save(vPath string, reader io.Reader, overwrite bool) error 
 		}
 	} else if !os.IsNotExist(err) {
 		// 发生了其他错误
-		return errors.Wrap(err, "error checking if file exists in LocalStore")
+		return "", errors.Wrap(err, "error checking if file exists in Store")
 	}
-	out, err := os.Create(filepath)
-	_, err = io.Copy(out, reader)
-	if err != nil {
-		return errors.Wrap(err, "Unable to save the file To LocalStore")
-	}
-	err = out.Close()
-	return err
-}
-func (l *LocalStore) Del(vPath string) error {
-	// 指定文件要保存的路径
-	filepath := path.Join(l.GetRoot(), vPath)
-	err := os.Remove(filepath)
-	return err
+	return filepath, nil
 }
 
 // generateNewFileName 生成一个新的文件名，避免与现有文件冲突
