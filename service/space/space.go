@@ -49,3 +49,17 @@ func DeleteSpace(Name string) error {
 	}
 	return nil
 }
+
+// ExistSpace 检查集合是否存在
+func ExistSpace(Name string) (bool, error) {
+	result, err := FilesDB().ListCollectionNames(context.Background(), bson.M{
+		"name": Name,
+	})
+	if err != nil {
+		return false, errors.Wrap(err, "判断集合是否存在失败")
+	}
+	if len(result) != 0 {
+		return true, nil
+	}
+	return false, nil
+}
