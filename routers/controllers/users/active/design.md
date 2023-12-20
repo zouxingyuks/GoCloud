@@ -33,7 +33,6 @@
 ### 业务实现
 
 - [ ] [检测用户是否需要激活](./status/design.md)
-
 - [ ] 发送 token
     - [x] [构造激活链接](./generateURL.go)
         - [x] 生成 token
@@ -45,7 +44,8 @@
         - [x] [邮件模板](emailTemplate.go)
             - [ ] 配置化
         - [ ] 邮件内容
-- [ ] 验证 token
-- [ ] 激活用户
+- [x] 激活用户
+    - [ ] 验证 token
 - [x] 记录日志
-  - [x] [生成日志](generateURL.go)
+    - [x] [生成日志](generateURL.go)
+    - [x] [使用日志](active.go)
