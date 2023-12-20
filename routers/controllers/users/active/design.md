@@ -18,12 +18,17 @@
 
 ### 日志记录：
 
-1. 记录 token 的生成时间。
-2. 记录 token 的使用时间。
-3. 记录 token 的使用者。
-4. 记录 token 的使用情况。
-5. 记录 token 的过期时间。
-6. 记录 token 的有效性。
+#### 激活链接生成日志
+
+1. 记录激活链接的生成时间。
+
+#### 激活链接使用日志
+
+1. 记录 token 的使用时间。
+2. 记录 token 的使用者。
+3. 记录 token 的使用情况。
+4. 记录 token 的过期时间。
+5. 记录 token 的有效性。
 
 ### 业务实现
 
@@ -32,9 +37,9 @@
 - [ ] 发送 token
     - [x] [构造激活链接](./generateURL.go)
         - [x] 生成 token
-          - [x] [token 生成](./tokenGenerate.go)
-          - [x] [token 解析](./tokenCheck.go)
-          - [ ] token 配置化
+            - [x] [token 生成](./tokenGenerate.go)
+            - [x] [token 解析](./tokenCheck.go)
+            - [ ] token 配置化
         - [x] 配置化
     - [ ] [发送邮件](./sendEmail.go)
         - [x] [邮件模板](emailTemplate.go)
@@ -42,4 +47,5 @@
         - [ ] 邮件内容
 - [ ] 验证 token
 - [ ] 激活用户
-- [ ] [记录日志](auditLogging.go)
+- [x] 记录日志
+  - [x] [生成日志](generateURL.go)
