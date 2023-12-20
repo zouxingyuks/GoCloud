@@ -1,26 +1,27 @@
-package users
+package login
 
 import (
 	"GoCloud/dao"
 	"GoCloud/pkg/crypto"
 	"GoCloud/pkg/log"
+	serializer2 "GoCloud/pkg/serializer"
 	"GoCloud/pkg/util"
-	"GoCloud/service/serializer"
+	"GoCloud/routers/controllers/users/active/status"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
-// LoginParam 登录参数
-type LoginParam struct {
+// Param 登录参数
+type Param struct {
 	Email    string `form:"userName" json:"email" binding:"required,email" example:"test@emali.com"`
 	Password string `form:"password" json:"password" binding:"required,min=8,max=20" example:"12345678"`
 }
 
 const (
-	LoginAlready    = 201
-	LoginAlreadyMsg = "请勿重复登陆"
-	ParamErrMsg     = "参数错误"
-	CheckErrMsg     = "身份验证失败"
+	Already     = 201
+	Msg         = "请勿重复登陆"
+	ParamErrMsg = "参数错误"
+	CheckErrMsg = "身份验证失败"
 )
 
 // Login 用于用户登录的接口。
@@ -29,7 +30,7 @@ const (
 // @Tags User
 // @Accept application/json
 // @Produce application/json
-// @Param user body LoginParam true "用户登录信息"
+// @Param user body Param true "用户登录信息"
 // @Success 200 {object} serializer.Response "登录成功"
 // @Success 201 {object} serializer.Response "请勿重复登陆"
 // @Failure 400 {object} serializer.Response "参数错误"
@@ -40,12 +41,24 @@ const (
 // @Router /users/session [post]
 func Login(c *gin.Context) {
 	entry := log.NewEntry("controller.user.login")
-	param := LoginParam{}
+	param := Param{}
 	// 1. 参数校验
 	err := c.ShouldBindJSON(&param)
 	if err != nil {
-		res := serializer.NewResponse(entry, http.StatusBadRequest, serializer.WithMsg(ParamErrMsg), serializer.WithErr(err))
-		c.JSON(res.Code, res)
+		entry.Warn("参数绑定错误", log.Field{
+			Key:   "err",
+			Value: err,
+		})
+		c.String(http.StatusBadRequest, "参数绑定错误")
+		return
+	}
+	if checkParam(c, param) == false {
+		entry.Warn(param.Email+"尝试登陆，但是参数错误", log.Field{
+			Key:   "ip",
+			Value: c.ClientIP(),
+		})
+		//此处不记录密码，主要是为了防止日志泄露，以及逻辑上不应该记录密码
+		c.JSON(http.StatusBadRequest, "参数非法")
 		return
 	}
 
@@ -53,42 +66,34 @@ func Login(c *gin.Context) {
 	//先在缓存中用email查找uuid,如果没有再去数据库中查找，这主要是为了防止在反复登陆时频繁访问数据库（虽然进行了接口的流量限制）
 	u, err := dao.GetUserByEmail(param.Email)
 	if err != nil {
-		res := serializer.NewResponse(entry, http.StatusNotFound, serializer.WithMsg(CheckErrMsg), serializer.WithErr(err))
+		res := serializer2.NewResponse(entry, http.StatusNotFound, serializer2.WithMsg(CheckErrMsg), serializer2.WithErr(err))
 		c.JSON(res.Code, res)
 		return
 	}
 	//3. 不允许重复登陆
 	uuid := util.Session().Get(c, "uuid")
 	if uuid != nil && uuid.(string) == u.UUID {
-		res := serializer.NewResponse(entry, LoginAlready, serializer.WithMsg(LoginAlreadyMsg), serializer.WithErr(err))
+		res := serializer2.NewResponse(entry, Already, serializer2.WithMsg(Msg), serializer2.WithErr(err))
 		c.JSON(res.Code, res)
 		return
 	}
 	//4. 密码校验
 	if authOK, err := crypto.NewCrypto(crypto.PasswordCrypto).Check([]byte(param.Password), []byte(u.Password)); !authOK {
-		res := serializer.NewResponse(entry, 400, serializer.WithMsg(CheckErrMsg), serializer.WithErr(err))
+		res := serializer2.NewResponse(entry, 400, serializer2.WithMsg(CheckErrMsg), serializer2.WithErr(err))
 		c.JSON(res.Code, res)
 		return
 	}
 
 	//4. 用户状态校验
-	if result, response := StatusCheck(*u); !result {
+	if result, response := status.Check(*u); !result {
 		c.JSON(response.Code, response)
 		return
 	}
 
-	//5. 二步验证
-	//if expectedUser.TwoFactor != "" {
-	//	// 需要二步验证
-	//	util.SetSession(c, map[string]interface{}{
-	//		"2fa_user_id": expectedUser.ID,
-	//	})
-	//	return serializer.Response{Code: 203}
-	//}
 	//准备清洗后的用户信息
-	user, err := serializer.BuildUser(*u)
+	user, err := serializer2.BuildUser(*u)
 	if err != nil {
-		res := serializer.NewResponse(entry, serializer.ServerErr, serializer.WithMsg(serializer.ServerErrMsg), serializer.WithErr(err))
+		res := serializer2.NewResponse(entry, serializer2.ServerErr, serializer2.WithMsg(serializer2.ServerErrMsg), serializer2.WithErr(err))
 		c.JSON(res.Code, res)
 		return
 	}
@@ -98,7 +103,7 @@ func Login(c *gin.Context) {
 		"uuid": u.UUID,
 	})
 
-	res := serializer.NewResponse(entry, http.StatusOK, serializer.WithData(user))
+	res := serializer2.NewResponse(entry, http.StatusOK, serializer2.WithData(user))
 	c.JSON(res.Code, res)
 	return
 }

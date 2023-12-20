@@ -1,7 +1,6 @@
 package login
 
 import (
-	"GoCloud/pkg/log"
 	"github.com/gin-gonic/gin"
 	"net/mail"
 	"regexp"
@@ -9,13 +8,6 @@ import (
 
 func checkParam(c *gin.Context, p Param) bool {
 	if !isValidEmail(p.Email) {
-		entry := log.NewEntry("controller.user.login")
-		// 记录日志
-		entry.Warn(p.Email+"尝试登陆，但是参数错误", log.Field{
-			Key:   "ip",
-			Value: c.ClientIP(),
-		})
-		//此处不记录密码，主要是为了防止日志泄露，以及逻辑上不应该记录密码
 		return false
 	}
 	return true
