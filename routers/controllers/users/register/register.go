@@ -1,13 +1,14 @@
-package users
+package register
 
 import (
 	"GoCloud/conf"
 	"GoCloud/dao"
 	"GoCloud/pkg/crypto"
-	"GoCloud/pkg/filter"
 	"GoCloud/pkg/log"
 	"GoCloud/pkg/rbac"
-	"GoCloud/service/serializer"
+	"GoCloud/pkg/serializer"
+	"GoCloud/routers/controllers/users/active"
+	"GoCloud/routers/controllers/users/active/status"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -16,7 +17,7 @@ import (
 // 设计思想：
 // 1. 防止箭头形代码：提高代码可读性
 
-type RegisterParam struct {
+type Param struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=6,max=20"`
 }
@@ -27,7 +28,7 @@ type RegisterParam struct {
 // @Tags User
 // @Accept application/json
 // @Produce application/json
-// @Param user body RegisterParam true "用户注册信息"
+// @Param user body Param true "用户注册信息"
 // @Success 200 {object} serializer.Response "注册成功"
 // @Failure 400 {object} serializer.Response "参数错误"
 // @Failure 500 {object} serializer.Response "服务异常"
@@ -42,7 +43,7 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	param := RegisterParam{}
+	param := Param{}
 	// 2.参数绑定
 	err := c.ShouldBindJSON(&param)
 	if err != nil {
@@ -50,18 +51,9 @@ func Register(c *gin.Context) {
 		c.JSON(res.Code, res)
 		return
 	}
-	if !filter.Facade.IsValidEmail(param.Email) {
-		//行为日志
-		res := serializer.NewResponse(entry, 400, serializer.WithMsg("邮箱非法"), serializer.WithField(
-			log.Field{
-				Key:   "Email",
-				Value: param.Email,
-			}))
-		c.JSON(res.Code, res)
-		return
-	}
-	if !filter.Facade.IsValidPassword(param.Password) {
-		res := serializer.NewResponse(entry, 400, serializer.WithMsg("密码非法"))
+	// 2. 检查
+	if !checkParam(c, param) {
+		res := serializer.NewResponse(entry, 400, serializer.WithMsg("参数错误"))
 		c.JSON(res.Code, res)
 		return
 	}
@@ -90,7 +82,7 @@ func Register(c *gin.Context) {
 	tUser, err = dao.GetUserByEmail(user.Email)
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
 		// 如果已经注册，检查用户状态
-		_, res := StatusCheck(*tUser)
+		_, res := status.Check(*tUser)
 		c.JSON(res.Code, res)
 		return
 	}
@@ -113,7 +105,7 @@ func Register(c *gin.Context) {
 	// 6. 发送激活邮件
 	if user.Status == dao.UserNotActivated {
 		// 发送激活邮件
-		err = SendActivationEmail(user.UUID, user.Email)
+		err = active.SendActivationEmail(user.UUID, user.Email)
 		if err != nil {
 			res := serializer.NewResponse(entry, 500, serializer.WithMsg("服务异常"), serializer.WithErr(err))
 			c.JSON(res.Code, res)
