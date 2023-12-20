@@ -36,7 +36,7 @@
           - [x] [token 解析](./tokenCheck.go)
           - [ ] token 配置化
         - [x] 配置化
-    - [ ] 发送邮件
+    - [ ] [发送邮件](./sendEmail.go)
         - [x] [邮件模板](emailTemplate.go)
             - [ ] 配置化
         - [ ] 邮件内容
