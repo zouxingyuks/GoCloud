@@ -1,6 +1,6 @@
 package reset
 
-const defaultResetPasswordEmailTmpl = `
+const defaultEmailTmpl = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -20,4 +20,4 @@ const defaultResetPasswordEmailTmpl = `
 </div>
 </body>
 </html>`
-const ResetPasswordEmailTitle = "GoCloud 密码重置"
+const Title = "GoCloud 密码重置"
