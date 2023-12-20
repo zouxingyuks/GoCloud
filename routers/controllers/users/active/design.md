@@ -30,8 +30,8 @@
 - [ ] [检测用户是否需要激活](./status/design.md)
 
 - [ ] 发送 token
-    - [ ] [构造激活链接](./generateURL.go)
-        - [x] [生成 token](token)
+    - [x] [构造激活链接](./generateURL.go)
+        - [x] 生成 token
           - [x] [token 生成](./tokenGenerate.go)
           - [x] [token 解析](./tokenCheck.go)
           - [ ] token 配置化

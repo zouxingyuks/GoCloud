@@ -2,14 +2,13 @@ package active
 
 import (
 	"GoCloud/conf"
-	token2 "GoCloud/service/token"
 	"github.com/pkg/errors"
 	"net/url"
 )
 
 func generateURL(uuid string) (string, error) {
 	// 生成激活链接
-	if token, err := token2.Generate(activeAction, uuid, exp); err != nil {
+	if token, err := Generate(activeAction, uuid, exp); err != nil {
 		return "", errors.Wrap(err, "Error generating activation token")
 	} else {
 		u := url.URL{}
