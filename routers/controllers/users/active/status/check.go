@@ -1,32 +1,34 @@
-package users
+package status
 
 import (
 	"GoCloud/dao"
 	"GoCloud/pkg/log"
-	"GoCloud/service/serializer"
+	"GoCloud/pkg/serializer"
+	"GoCloud/routers/controllers/users/active"
 	"fmt"
+	"net/http"
 )
 
-// StatusCheck 检查用户状态
+// Check 检查用户状态
 // bool 用于检测用户是否具有登录资格，true表示可以登录，false表示不可以登录
 // serializer.Response 用于返回给注册接口的响应
-func StatusCheck(u dao.User) (bool, serializer.Response) {
+func Check(u dao.User) (bool, serializer.Response) {
 	entry := log.NewEntry("service.user.active")
 	switch u.Status {
 	//未激活状态
 	case dao.UserNotActivated:
-		err := SendActivationEmail(u.UUID, u.Email)
+		err := active.SendActivationEmail(u.UUID, u.Email)
 		fmt.Println(err)
 		if err != nil {
 			return false, serializer.NewResponse(entry, 500, serializer.WithMsg("账户等待激活,邮件发送失败"), serializer.WithErr(err))
 		}
-		return false, serializer.NewResponse(entry, 400, serializer.WithMsg("账户等待激活,已经重新发送激活邮件"))
+		return false, serializer.NewResponse(entry, http.StatusLocked, serializer.WithMsg("账户等待激活,已经重新发送激活邮件"))
 	//激活状态
 	case dao.UserActive:
 		return true, serializer.NewResponse(entry, 400, serializer.WithMsg("Email already in use"))
 	//封禁状态
 	case dao.UserBaned:
-		return false, serializer.NewResponse(entry, 400, serializer.WithMsg("账户已被封禁"))
+		return false, serializer.NewResponse(entry, http.StatusLocked, serializer.WithMsg("账户已被封禁"))
 
 	default:
 		return false, serializer.NewResponse(entry, 400, serializer.WithMsg("账户状态异常"))
