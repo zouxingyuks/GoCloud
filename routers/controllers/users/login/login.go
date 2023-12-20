@@ -49,7 +49,7 @@ func Login(c *gin.Context) {
 			Key:   "err",
 			Value: err,
 		})
-		c.String(http.StatusBadRequest, "参数绑定错误")
+		c.JSON(http.StatusBadRequest, "参数绑定错误")
 		return
 	}
 	if checkParam(c, param) == false {
@@ -66,13 +66,26 @@ func Login(c *gin.Context) {
 	//先在缓存中用email查找uuid,如果没有再去数据库中查找，这主要是为了防止在反复登陆时频繁访问数据库（虽然进行了接口的流量限制）
 	u, err := dao.GetUserByEmail(param.Email)
 	if err != nil {
-		res := serializer2.NewResponse(entry, http.StatusNotFound, serializer2.WithMsg(CheckErrMsg), serializer2.WithErr(err))
-		c.JSON(res.Code, res)
+		entry.Warn("尝试登录不存在的用户", log.Field{
+			Key:   "ip",
+			Value: c.ClientIP(),
+		}, log.Field{
+			Key:   "email",
+			Value: param.Email,
+		})
+		c.JSON(http.StatusNotFound, "用户不存在")
 		return
 	}
 	//3. 不允许重复登陆
 	uuid := util.Session().Get(c, "uuid")
 	if uuid != nil && uuid.(string) == u.UUID {
+		entry.Warn("尝试重复登陆", log.Field{
+			Key:   "ip",
+			Value: c.ClientIP(),
+		}, log.Field{
+			Key:   "email",
+			Value: param.Email,
+		})
 		res := serializer2.NewResponse(entry, Already, serializer2.WithMsg(Msg), serializer2.WithErr(err))
 		c.JSON(res.Code, res)
 		return
