@@ -2,7 +2,7 @@ package limit
 
 import (
 	"GoCloud/pkg/log"
-	"GoCloud/service/serializer"
+	"GoCloud/pkg/serializer"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/time/rate"
 	"net/http"
